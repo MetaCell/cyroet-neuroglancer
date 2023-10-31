@@ -9,6 +9,14 @@ dependencies = [
     "neuroglancer"
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "pre-commit",
+    "pytest-cov",
+]
+
 [build-system]
 requires = ["setuptools>= 40.9.0", "wheel"]
 build-backend = "setuptools.build_meta"
