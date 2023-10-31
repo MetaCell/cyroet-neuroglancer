@@ -27,6 +27,7 @@ def _verify_encoded_values_offset(
         )
     return encoded_values_offset
 
+
 def _verify_lookup_table_offset(lookup_table_offset: int, chunk_size: int) -> int:
     if lookup_table_offset > chunk_size:
         raise ValueError(
@@ -35,7 +36,9 @@ def _verify_lookup_table_offset(lookup_table_offset: int, chunk_size: int) -> in
     return lookup_table_offset
 
 
-def _decode_block_header(header: tuple[int, int], chunk_size: int) -> tuple[int, int, int]:
+def _decode_block_header(
+    header: tuple[int, int], chunk_size: int
+) -> tuple[int, int, int]:
     first_int, second_int = header
     # Pull the lookup offset from the least significant 24 bits
     lookup_table_offset = _verify_lookup_table_offset(
@@ -46,14 +49,18 @@ def _decode_block_header(header: tuple[int, int], chunk_size: int) -> tuple[int,
     encoded_bits = _verify_bits(first_int >> 24)
 
     # Pull the encoded values offset from the second integer
-    encoded_values_offset = _verify_encoded_values_offset(OFFSET_BYTES * second_int, encoded_bits, chunk_size)
+    encoded_values_offset = _verify_encoded_values_offset(
+        OFFSET_BYTES * second_int, encoded_bits, chunk_size
+    )
 
     return lookup_table_offset, encoded_bits, encoded_values_offset
 
 
 def _decode_block(block: np.ndarray, block_offset: int, chunk_size: int) -> np.ndarray:
     header = struct.unpack_from("<II", block, block_offset)
-    lookup_table_offset, encoded_bits, encoded_values_offset = _decode_block_header(header, chunk_size)
+    lookup_table_offset, encoded_bits, encoded_values_offset = _decode_block_header(
+        header, chunk_size
+    )
 
 
 def decode_chunk(chunk: Chunk, block_size) -> np.ndarray:

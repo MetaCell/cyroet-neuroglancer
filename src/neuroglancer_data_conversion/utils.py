@@ -42,14 +42,14 @@ def get_grid_size_from_block_size(
     Calculate the grid size from the block size
 
     Both the data shape and block size should be in z, y, x order
-    
+
     Parameters
     ----------
     data_shape : tuple[int, int, int]
         The shape of the data
     block_size : tuple[int, int, int]
         The block size
-    
+
     Returns
     -------
     tuple[int, int, int]

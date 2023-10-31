@@ -21,7 +21,7 @@ def load_data(metadata_path, annotations_path):
 def write_annotations(output_dir, annotations, coordinate_space, colors):
     """
     Create a neuroglancer annotation folder with the given annotations.
-    
+
     See https://github.com/google/neuroglancer/blob/master/src/neuroglancer/datasource/precomputed/annotations.md
     """
     names = [a["metadata"]["annotation_object"]["name"] for a in annotations]
@@ -105,6 +105,7 @@ def main(paths, output_dir, should_view):
 
     if should_view:
         view_data(coordinate_space, output_dir)
+
 
 if __name__ == "__main__":
     base_dir = Path("/media/starfish/LargeSSD/data/cryoET/data")
