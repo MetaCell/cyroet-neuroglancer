@@ -6,7 +6,7 @@ import dask.array as da
 
 from cryo_et_neuroglancer.utils import (
     pad_block,
-    get_grid_size_from_block_size,
+    get_grid_size_from_block_shape,
 )
 from cryo_et_neuroglancer.chunk import Chunk
 
@@ -203,7 +203,7 @@ def create_segmentation_chunk(
 ) -> Chunk:
     """Convert data in a dask array to a neuroglancer segmentation chunk"""
     bz, by, bx = block_size
-    gz, gy, gx = get_grid_size_from_block_size(dask_data.shape, block_size)
+    gz, gy, gx = get_grid_size_from_block_shape(dask_data.shape, block_size)
     stored_lookup_tables: dict[bytes, tuple[int, int]] = {}
     # big enough to hold the 64-bit starting block headers
     buffer = bytearray(gx * gy * gz * 8)
