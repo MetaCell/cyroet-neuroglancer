@@ -46,7 +46,7 @@ def _unpack_encoded_values(
     return packed_values.reshape(-1, values_per_word)[:, :block_size].flatten()
 
 
-def unpad_block(
+def _unpad_block(
     z: int,
     y: int,
     x: int,
@@ -157,7 +157,7 @@ def decode_chunk(chunk: Chunk, block_shape: tuple[int, int, int]) -> np.ndarray:
     for z, y, x in np.ndindex(gz, gy, gx):
         block_offset = 8 * (x + gx * (y + gy * z))
         decoded_values = _decode_block(chunk, block_offset, chunk.size, block_shape)
-        decoded_values = unpad_block(z, y, x, decoded_values, block_shape, chunk.shape)
+        decoded_values = _unpad_block(z, y, x, decoded_values, block_shape, chunk.shape)
         all_decoded_values[
             z * block_shape[0] : (z + 1) * block_shape[0],
             y * block_shape[1] : (y + 1) * block_shape[1],
