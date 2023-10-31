@@ -1,8 +1,8 @@
 import struct
 import numpy as np
 
-from neuroglancer_data_conversion.utils import get_grid_size_from_block_size
-from neuroglancer_data_conversion.chunk import Chunk
+from cryo_et_neuroglancer.utils import get_grid_size_from_block_size
+from cryo_et_neuroglancer.chunk import Chunk
 
 # The units for the offsets are in 32-bit words
 OFFSET_BYTES = 4
@@ -56,11 +56,17 @@ def _decode_block_header(
     return lookup_table_offset, encoded_bits, encoded_values_offset
 
 
-def _decode_block(block: np.ndarray, block_offset: int, chunk_size: int) -> np.ndarray:
-    header = struct.unpack_from("<II", block, block_offset)
+def _decode_lookup_table(chunk: Chunk, lookup_table_offset):
+    pass
+
+
+def _decode_block(chunk: Chunk, block_offset: int, chunk_size: int) -> np.ndarray:
+    header = struct.unpack_from("<II", chunk, block_offset)
     lookup_table_offset, encoded_bits, encoded_values_offset = _decode_block_header(
         header, chunk_size
     )
+
+    # lookup_table = _decode_lookup_table(chunk, lookup_table_offset)
 
 
 def decode_chunk(chunk: Chunk, block_size) -> np.ndarray:

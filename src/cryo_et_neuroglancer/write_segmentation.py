@@ -3,11 +3,11 @@ from tqdm import tqdm
 import numpy as np
 import dask.array as da
 
-from neuroglancer_data_conversion.utils import iterate_chunks
+from cryo_et_neuroglancer.utils import iterate_chunks
 from data_conversion.neuroglancer_data_conversion.segmentation_encoding import (
     create_segmentation_chunk,
 )
-from neuroglancer_data_conversion.io import load_omezarr_data, write_metadata
+from cryo_et_neuroglancer.io import load_omezarr_data, write_metadata
 
 
 def _create_metadata(

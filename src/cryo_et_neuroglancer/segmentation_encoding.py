@@ -4,11 +4,11 @@ import struct
 import numpy as np
 import dask.array as da
 
-from neuroglancer_data_conversion.utils import (
+from cryo_et_neuroglancer.utils import (
     pad_block,
     get_grid_size_from_block_size,
 )
-from neuroglancer_data_conversion.chunk import Chunk
+from cryo_et_neuroglancer.chunk import Chunk
 
 DEBUG = False
 

@@ -1,5 +1,5 @@
 [project]
-name = "neuroglancer-data-conversion"
+name = "cryo-et-neuroglancer"
 version = "0.0.1"
 dependencies = [
     "ome-zarr",
@@ -15,6 +15,7 @@ dev = [
     "ruff",
     "pre-commit",
     "pytest-cov",
+    "mypy",
 ]
 
 [build-system]
