@@ -1,10 +1,12 @@
 from pathlib import Path
+from typing import Any, Iterable
 from tqdm import tqdm
 import numpy as np
 import dask.array as da
+from cryo_et_neuroglancer.chunk import Chunk
 
 from cryo_et_neuroglancer.utils import iterate_chunks
-from data_conversion.neuroglancer_data_conversion.segmentation_encoding import (
+from cryo_et_neuroglancer.segmentation_encoding import (
     create_segmentation_chunk,
 )
 from cryo_et_neuroglancer.io import load_omezarr_data, write_metadata
@@ -15,7 +17,7 @@ def _create_metadata(
     block_size: tuple[int, int, int],
     data_size: tuple[int, int, int],
     data_directory: str,
-):
+) -> dict[str, Any]:
     """Create the metadata for the segmentation"""
     metadata = {
         "@type": "neuroglancer_multiscale_volume",
@@ -37,7 +39,9 @@ def _create_metadata(
     return metadata
 
 
-def create_segmentation(dask_data: da.Array, block_size):
+def create_segmentation(
+    dask_data: da.Array, block_size: tuple[int, int, int]
+) -> Iterable[Chunk]:
     """Yield the neuroglancer segmentation format chunks"""
     to_iterate = iterate_chunks(dask_data)
     num_iters = np.prod(dask_data.numblocks)
@@ -47,7 +51,11 @@ def create_segmentation(dask_data: da.Array, block_size):
         yield create_segmentation_chunk(chunk, dimensions, block_size)
 
 
-def main(filename, block_size=(64, 64, 64), data_directory="data"):
+def main(
+    filename: Path,
+    block_size: tuple[int, int, int] = (64, 64, 64),
+    data_directory: str = "data",
+) -> None:
     """Convert the given OME-Zarr file to neuroglancer segmentation format with the given block size"""
     print(f"Converting {filename} to neuroglancer compressed segmentation format")
     dask_data = load_omezarr_data(filename)

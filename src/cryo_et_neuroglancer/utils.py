@@ -1,4 +1,5 @@
 from math import ceil
+from typing import Iterator
 
 import dask.array as da
 
@@ -15,7 +16,9 @@ def pad_block(block: da.Array, block_size: tuple[int, int, int]) -> da.Array:
     )
 
 
-def iterate_chunks(dask_data: da.Array):
+def iterate_chunks(
+    dask_data: da.Array,
+) -> Iterator[tuple[da.Array, tuple[tuple[int, int, int], tuple[int, int, int]]]]:
     """Iterate over the chunks in the dask array"""
     chunk_layout = dask_data.chunks
 

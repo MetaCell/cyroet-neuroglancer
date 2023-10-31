@@ -2,6 +2,7 @@ import argparse
 import json
 import ndjson
 from pathlib import Path
+from typing import Any
 
 import neuroglancer
 import neuroglancer.write_annotations
@@ -9,7 +10,9 @@ import neuroglancer.static_file_server
 import neuroglancer.cli
 
 
-def load_data(metadata_path, annotations_path):
+def load_data(
+    metadata_path: Path, annotations_path: Path
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Load in the metadata (json) and annotations (ndjson) files."""
     with open(metadata_path) as f:
         metadata = json.load(f)
@@ -18,7 +21,12 @@ def load_data(metadata_path, annotations_path):
     return metadata, annotations
 
 
-def write_annotations(output_dir, annotations, coordinate_space, colors):
+def write_annotations(
+    output_dir: Path,
+    annotations: list[dict[str, Any]],
+    coordinate_space: neuroglancer.CoordinateSpace,
+    colors: list[tuple[int, int, int, int]],
+) -> None:
     """
     Create a neuroglancer annotation folder with the given annotations.
 
@@ -54,7 +62,7 @@ def write_annotations(output_dir, annotations, coordinate_space, colors):
     writer.write(output_dir)
 
 
-def view_data(coordinate_space, output_dir):
+def view_data(coordinate_space: neuroglancer.CoordinateSpace, output_dir: Path) -> None:
     ap = argparse.ArgumentParser()
     neuroglancer.cli.add_server_arguments(ap)
     args = ap.parse_args()
@@ -88,7 +96,7 @@ void main() {
     print(viewer)
 
 
-def main(paths, output_dir, should_view):
+def main(paths: list[tuple[Path, Path]], output_dir: Path, should_view: bool) -> None:
     """For each path set, load the data and write the combined annotations."""
     annotations = []
     for path_set in paths:

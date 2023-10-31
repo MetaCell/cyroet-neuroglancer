@@ -61,20 +61,18 @@ def _pack_encoded_values(encoded_values: np.ndarray, encoded_bits: int) -> bytes
     )
     if encoded_bits == 1:
         reshaped = padded_values.reshape((-1, 32)).astype(np.uint8)
-        packed_values = np.packbits(reshaped, bitorder="little").tobytes()
+        packed_values: bytes = np.packbits(reshaped, bitorder="little").tobytes()
 
         if DEBUG:
             values, binary = get_back_values_from_buffer(packed_values)
             assert np.all(binary == padded_values)
         return packed_values
     else:
+        # TODO implement other bit sizes
         raise NotImplementedError("Only 1 bit encoding is implemented")
-    # TODO implement other bit sizes
-    # packed_values = 1
-    # return packed_values.tobytes()
 
 
-def get_back_values_from_buffer(bytes_: bytes):
+def get_back_values_from_buffer(bytes_: bytes) -> tuple[np.ndarray, np.ndarray]:
     """
     Return the values from the given buffer
 
@@ -103,7 +101,7 @@ def _create_block_header(
     encoded_bits: int,
     encoded_values_offset: int,
     block_offset: int,
-):
+) -> None:
     """
     Create a block header (64-bit)
 
@@ -202,7 +200,7 @@ def create_segmentation_chunk(
     dask_data: da.Array,
     dimensions: tuple[tuple[int, int, int], tuple[int, int, int]],
     block_size: tuple[int, int, int] = (8, 8, 8),
-):
+) -> Chunk:
     """Convert data in a dask array to a neuroglancer segmentation chunk"""
     bz, by, bx = block_size
     gz, gy, gx = get_grid_size_from_block_size(dask_data.shape, block_size)

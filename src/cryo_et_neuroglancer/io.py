@@ -16,7 +16,7 @@ def load_omezarr_data(input_filepath: Path) -> da.Array:
     return dask_data.persist()
 
 
-def write_metadata(metadata: dict[str, Any], output_directory: Path):
+def write_metadata(metadata: dict[str, Any], output_directory: Path) -> None:
     """Write the segmentation to the given directory"""
     metadata_path = output_directory / "info"
 

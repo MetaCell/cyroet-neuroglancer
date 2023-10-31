@@ -1,6 +1,7 @@
 [project]
 name = "cryo-et-neuroglancer"
 version = "0.0.1"
+requires-python = ">=3.10"
 dependencies = [
     "ome-zarr",
     "numpy",
@@ -26,3 +27,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 include = ["neuroglancer_data_conversion"]
 exclude = ["examples", "tests", "notebooks"]
+
+[tool.mypy]
+mypy_path = "src"
+ignore_missing_imports = true

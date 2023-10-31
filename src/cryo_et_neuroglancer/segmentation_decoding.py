@@ -56,12 +56,13 @@ def _decode_block_header(
     return lookup_table_offset, encoded_bits, encoded_values_offset
 
 
-def _decode_lookup_table(chunk: Chunk, lookup_table_offset):
+def _decode_lookup_table(chunk: Chunk, lookup_table_offset: int) -> np.ndarray:
     pass
 
 
 def _decode_block(chunk: Chunk, block_offset: int, chunk_size: int) -> np.ndarray:
-    header = struct.unpack_from("<II", chunk, block_offset)
+    header_values = struct.unpack_from("<II", chunk.buffer, block_offset)
+    header: tuple[int, int] = (header_values[0], header_values[1])
     lookup_table_offset, encoded_bits, encoded_values_offset = _decode_block_header(
         header, chunk_size
     )
@@ -69,7 +70,7 @@ def _decode_block(chunk: Chunk, block_offset: int, chunk_size: int) -> np.ndarra
     # lookup_table = _decode_lookup_table(chunk, lookup_table_offset)
 
 
-def decode_chunk(chunk: Chunk, block_size) -> np.ndarray:
+def decode_chunk(chunk: Chunk, block_size: tuple[int, int, int]) -> np.ndarray:
     """Decode the given chunk
 
     Parameters
@@ -84,8 +85,14 @@ def decode_chunk(chunk: Chunk, block_size) -> np.ndarray:
     np.ndarray
         The decoded chunk
     """
+    # TODO this doesn't store the chunk values correctly yet
+    decoded_values = np.zeros(chunk.shape, dtype=np.uint32)
     gz, gy, gx = get_grid_size_from_block_size(chunk.shape, block_size)
 
     for z, y, x in np.ndindex(gz, gy, gx):
         block_offset = 8 * (x + gx * (y + gy * z))
-        chunk[z, y, x] = _decode_block(chunk, block_offset, chunk_size=chunk.size)
+        decoded_values[z, y, x] = _decode_block(
+            chunk, block_offset, chunk_size=chunk.size
+        )
+
+    return decoded_values
