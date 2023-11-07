@@ -119,7 +119,7 @@ def _create_block_header(
 def _create_lookup_table(
     buffer: bytearray,
     stored_lookup_tables: dict[bytes, tuple[int, int]],
-    unique_values: da.Array,
+    unique_values: np.ndarray,
 ) -> tuple[int, int]:
     """
     Create a lookup table for the given values
@@ -141,7 +141,7 @@ def _create_lookup_table(
     encoded_bits : int
         The number of bits used to encode the values
     """
-    unique_values = unique_values.astype(np.uint32).compute()
+    unique_values = unique_values.astype(np.uint32)
     values_in_bytes = unique_values.tobytes()
     if values_in_bytes not in stored_lookup_tables:
         lookup_table_offset = _get_buffer_position(buffer)
@@ -157,7 +157,7 @@ def _create_lookup_table(
 
 
 def _create_encoded_values(
-    buffer: bytearray, positions: da.Array, encoded_bits: int
+    buffer: bytearray, positions: np.ndarray, encoded_bits: int
 ) -> int:
     """Create the encoded values for the given values
 
@@ -176,7 +176,7 @@ def _create_encoded_values(
         The offset in the buffer to the encoded values
     """
     encoded_values_offset = _get_buffer_position(buffer)
-    buffer += _pack_encoded_values(positions.compute(), encoded_bits)
+    buffer += _pack_encoded_values(positions, encoded_bits)
     return encoded_values_offset
 
 
@@ -188,24 +188,25 @@ def _create_file_chunk_header(number_channels=1) -> bytearray:
 
 
 def create_segmentation_chunk(
-    dask_data: da.Array,
+    data: np.ndarray,
     dimensions: tuple[tuple[int, int, int], tuple[int, int, int]],
     block_size: tuple[int, int, int] = (8, 8, 8),
 ) -> Chunk:
     """Convert data in a dask array to a neuroglancer segmentation chunk"""
     bz, by, bx = block_size
-    gz, gy, gx = get_grid_size_from_block_shape(dask_data.shape, block_size)
-    stored_lookup_tables: dict[bytes, tuple[int, int]] = {}
+    gz, gy, gx = get_grid_size_from_block_shape(data.shape, block_size)
+    stored_lookup_tables = {}
     # big enough to hold the 64-bit starting block headers
     buffer = bytearray(gx * gy * gz * 8)
+
     # dask_data = da.moveaxis(dask_data, (0, 1, 2), (2, 1, 0)) ?
     for z, y, x in np.ndindex((gz, gy, gx)):
-        block = dask_data[
+        block = data[
             z * bz : (z + 1) * bz,
             y * by : (y + 1) * by,
             x * bx : (x + 1) * bx
         ]
-        unique_values, indices = da.unique(block, return_inverse=True)
+        unique_values, indices = np.unique(block, return_inverse=True)
         if block.shape != block_size:
             block = pad_block(block, block_size)
 

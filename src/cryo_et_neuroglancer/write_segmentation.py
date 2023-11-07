@@ -49,7 +49,7 @@ def create_segmentation(
     for chunk, dimensions in tqdm(
         to_iterate, desc="Processing chunks", total=num_iters
     ):
-        yield create_segmentation_chunk(chunk, dimensions, block_size)
+        yield create_segmentation_chunk(chunk.compute(), dimensions, block_size)
 
 
 def main(

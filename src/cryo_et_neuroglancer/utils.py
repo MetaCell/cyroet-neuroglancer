@@ -2,19 +2,20 @@ from math import ceil
 from typing import Iterator
 from functools import lru_cache
 
+import numpy as np
 import dask.array as da
 
 
-def pad_block(block: da.Array, block_size: tuple[int, int, int]) -> da.Array:
+def pad_block(block: np.ndarray, block_size: tuple[int, int, int]) -> np.ndarray:
     """Pad the block to the given block size with zeros"""
-    return da.pad(
+    return np.pad(
         block,
         (
             (0, block_size[0] - block.shape[0]),
             (0, block_size[1] - block.shape[1]),
             (0, block_size[2] - block.shape[2]),
         ),
-        # mode='edge'
+        mode='edge'
     )
 
 
