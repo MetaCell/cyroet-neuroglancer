@@ -13,6 +13,7 @@ def pad_block(block: da.Array, block_size: tuple[int, int, int]) -> da.Array:
             (0, block_size[1] - block.shape[1]),
             (0, block_size[2] - block.shape[2]),
         ),
+        # mode='edge'
     )
 
 
