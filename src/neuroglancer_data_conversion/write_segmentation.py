@@ -2,9 +2,11 @@ from pathlib import Path
 from tqdm import tqdm
 import numpy as np
 import dask.array as da
+import sys
+
 
 from neuroglancer_data_conversion.utils import iterate_chunks
-from data_conversion.neuroglancer_data_conversion.segmentation_encoding import (
+from neuroglancer_data_conversion.segmentation_encoding import (
     create_segmentation_chunk,
 )
 from neuroglancer_data_conversion.io import load_omezarr_data, write_metadata
@@ -65,9 +67,17 @@ def main(filename, block_size=(64, 64, 64), data_directory="data"):
 
 if __name__ == "__main__":
     # TODO create command line interface
-    base_directory = Path("/media/starfish/LargeSSD/data/cryoET/data")
-    actin_filename = base_directory / "00004_actin_ground_truth_zarr"
-    microtubules_filename = base_directory / "00004_MT_ground_truth_zarr"
+    # base_directory = Path("/media/starfish/LargeSSD/data/cryoET/data")
+    # actin_filename = base_directory / "00004_actin_ground_truth_zarr"
+    # microtubules_filename = base_directory / "00004_MT_ground_truth_zarr"
+
+    if len(sys.argv) < 2:
+        print("Missing argument (folder)")
+        sys.exit(-1)
+    actin_file_path = Path(sys.argv[1])
+    if not actin_file_path.exists():
+        print("The data folder doesn't exist")
+        sys.exit(-2)
     block_size = (32, 32, 32)
-    main(actin_filename, block_size)
-    main(microtubules_filename, block_size)
+    main(actin_file_path, block_size)
+    # main(microtubules_filename, block_size)

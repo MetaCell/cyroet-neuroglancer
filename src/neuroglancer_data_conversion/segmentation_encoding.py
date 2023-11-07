@@ -32,47 +32,65 @@ def _get_encoded_bits(unique_values: np.ndarray) -> int:
     return bits
 
 
-def _pack_encoded_values(encoded_values: np.ndarray, encoded_bits: int) -> bytes:
-    """
-    Pack the encoded values into 32bit unsigned integers
+# def _pack_encoded_values(encoded_values: np.ndarray, encoded_bits: int) -> bytes:
+#     """
+#     Pack the encoded values into 32bit unsigned integers
 
-    To view the packed values as a numpy array, use the following:
-    np.frombuffer(packed_values, dtype=np.uint32).view(f"u{encoded_bits}")
+#     To view the packed values as a numpy array, use the following:
+#     np.frombuffer(packed_values, dtype=np.uint32).view(f"u{encoded_bits}")
 
-    Parameters
-    ----------
-    encoded_values : np.ndarray
-        The encoded values
-    encoded_bits : int
-        The number of bits used to encode the values
+#     Parameters
+#     ----------
+#     encoded_values : np.ndarray
+#         The encoded values
+#     encoded_bits : int
+#         The number of bits used to encode the values
 
-    Returns
-    -------
-    packed_values : bytes
-        The packed values
-    """
-    if encoded_bits == 0:
+#     Returns
+#     -------
+#     packed_values : bytes
+#         The packed values
+#     """
+#     if encoded_bits == 0:
+#         return bytes()
+#     values_per_uint32 = 32 // encoded_bits
+#     number_of_values = ceil(len(encoded_values) / values_per_uint32)
+#     padded_values = np.pad(
+#         encoded_values,
+#         (0, number_of_values * values_per_uint32 - len(encoded_values)),
+#     )
+#     if encoded_bits == 1:
+#         reshaped = padded_values.reshape((-1, 32)).astype(np.uint8)
+#         packed_values = np.packbits(reshaped, bitorder="little").tobytes()
+
+#         if DEBUG:
+#             values, binary = get_back_values_from_buffer(packed_values)
+#             assert np.all(binary == padded_values)
+#         return packed_values
+#     else:
+#         raise NotImplementedError("Only 1 bit encoding is implemented")
+#     # TODO implement other bit sizes
+#     # packed_values = 1
+#     # return packed_values.tobytes()
+
+def _pack_encoded_values(encoded_values, bits):
+    if bits == 0:
         return bytes()
-    values_per_uint32 = 32 // encoded_bits
-    number_of_values = ceil(len(encoded_values) / values_per_uint32)
-    padded_values = np.pad(
-        encoded_values,
-        (0, number_of_values * values_per_uint32 - len(encoded_values)),
-    )
-    if encoded_bits == 1:
-        reshaped = padded_values.reshape((-1, 32)).astype(np.uint8)
-        packed_values = np.packbits(reshaped, bitorder="little").tobytes()
-
-        if DEBUG:
-            values, binary = get_back_values_from_buffer(packed_values)
-            assert np.all(binary == padded_values)
-        return packed_values
     else:
-        raise NotImplementedError("Only 1 bit encoding is implemented")
-    # TODO implement other bit sizes
-    # packed_values = 1
-    # return packed_values.tobytes()
-
+        assert 32 % bits == 0
+        assert np.array_equal(encoded_values,
+                              encoded_values & ((1 << bits) - 1))
+        values_per_32bit = 32 // bits
+        padded_values = np.pad(encoded_values.astype("<I", casting="unsafe"),
+                               [(0, -len(encoded_values) % values_per_32bit)],
+                               mode="constant", constant_values=0)
+        assert len(padded_values) % values_per_32bit == 0
+        import functools
+        packed_values = functools.reduce(
+            np.bitwise_or,
+            (padded_values[shift::values_per_32bit] << (shift * bits)
+             for shift in range(values_per_32bit)))
+        return packed_values.tobytes()
 
 def get_back_values_from_buffer(bytes_: bytes):
     """
@@ -194,7 +212,8 @@ def _create_encoded_values(
         The offset in the buffer to the encoded values
     """
     encoded_values_offset = _get_buffer_position(buffer)
-    buffer += _pack_encoded_values(positions.compute(), encoded_bits)
+    p = positions.compute()
+    buffer += _pack_encoded_values(p, encoded_bits)
     return encoded_values_offset
 
 
@@ -209,14 +228,17 @@ def create_segmentation_chunk(
     stored_lookup_tables: dict[bytes, tuple[int, int]] = {}
     # big enough to hold the 64-bit starting block headers
     buffer = bytearray(gx * gy * gz * 8)
-
-    for z, y, x in np.ndindex(gz, gy, gx):
+    # dask_data = da.moveaxis(dask_data, (0, 1, 2), (2, 1, 0)) ?
+    for z, y, x in np.ndindex((gz, gy, gx)):
         block = dask_data[
-            z * bz : (z + 1) * bz, y * by : (y + 1) * by, x * bx : (x + 1) * bx
+            z * bz : (z + 1) * bz,
+            y * by : (y + 1) * by,
+            x * bx : (x + 1) * bx
         ]
         unique_values, indices = da.unique(block, return_inverse=True)
         # TODO mismatch between dimensions and data size after padding
-        block = pad_block(block, block_size)
+        if block.shape != block_size:
+            block = pad_block(block, block_size)
 
         lookup_table_offset, encoded_bits = _create_lookup_table(
             buffer, stored_lookup_tables, unique_values
@@ -231,4 +253,14 @@ def create_segmentation_chunk(
             block_offset,
         )
 
-    return Chunk(buffer, dimensions)
+    buf = bytearray(4 * 1)
+
+    # for channel in range(1):
+    #     # Write offset of the current channel into the header
+    #     assert len(buf) % 4 == 0
+    #     struct.pack_into("<I", buf, channel * 4, len(buf) // 4)
+    channel = 0
+    struct.pack_into("<I", buf, channel * 4, len(buf) // 4)
+    buf += buffer
+
+    return Chunk(buf, dimensions)

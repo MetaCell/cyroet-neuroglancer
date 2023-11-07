@@ -19,5 +19,4 @@ class Chunk:
         directory.mkdir(parents=True, exist_ok=True)
         output_filename = self.get_name()
         output_filepath = directory / output_filename
-        with open(output_filepath, "wb") as f:
-            f.write(self.buffer)
+        output_filepath.write_bytes(self.buffer)
