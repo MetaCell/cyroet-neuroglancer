@@ -1,8 +1,6 @@
-from math import ceil
 import struct
 
 import numpy as np
-import dask.array as da
 
 import functools
 
@@ -49,7 +47,7 @@ def _pack_encoded_values(encoded_values: np.ndarray, bits: int) -> bytes:
                             [(0, -len(encoded_values) % values_per_32bit)],
                             mode="constant", constant_values=0)
     assert len(padded_values) % values_per_32bit == 0
-    packed_values = functools.reduce(
+    packed_values: np.ndarray = functools.reduce(
         np.bitwise_or,
         (padded_values[shift::values_per_32bit] << (shift * bits)
             for shift in range(values_per_32bit)))
@@ -180,7 +178,7 @@ def _create_encoded_values(
     return encoded_values_offset
 
 
-def _create_file_chunk_header(number_channels=1) -> bytearray:
+def _create_file_chunk_header(number_channels: int=1) -> bytearray:
     buf = bytearray(4 * number_channels)
     for offset in range(number_channels):
         struct.pack_into("<I", buf, offset * 4, len(buf) // 4)
@@ -195,7 +193,7 @@ def create_segmentation_chunk(
     """Convert data in a dask array to a neuroglancer segmentation chunk"""
     bz, by, bx = block_size
     gz, gy, gx = get_grid_size_from_block_shape(data.shape, block_size)
-    stored_lookup_tables = {}
+    stored_lookup_tables: dict[bytes, tuple[int, int]] = {}
     # big enough to hold the 64-bit starting block headers
     buffer = bytearray(gx * gy * gz * 8)
 

@@ -68,7 +68,7 @@ def get_grid_size_from_block_shape(
 
 
 @lru_cache()
-def number_of_encoding_bits(nb_values) -> int:
+def number_of_encoding_bits(nb_values: int) -> int:
     """Return the number of bits needed to encode the given values"""
     for nb_bits in (0, 1, 2, 4, 8, 16, 32):
         if (1 << nb_bits) >= nb_values:
