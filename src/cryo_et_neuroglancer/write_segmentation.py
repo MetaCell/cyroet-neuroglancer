@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterator
 from tqdm import tqdm
 import numpy as np
 import dask.array as da
@@ -42,7 +42,7 @@ def _create_metadata(
 
 def create_segmentation(
     dask_data: da.Array, block_size: tuple[int, int, int]
-) -> Iterable[Chunk]:
+) -> Iterator[Chunk]:
     """Yield the neuroglancer segmentation format chunks"""
     to_iterate = iterate_chunks(dask_data)
     num_iters = np.prod(dask_data.numblocks)

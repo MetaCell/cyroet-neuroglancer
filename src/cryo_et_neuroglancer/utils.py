@@ -1,5 +1,6 @@
 from math import ceil
 from typing import Iterator
+from functools import lru_cache
 
 import dask.array as da
 
@@ -63,3 +64,12 @@ def get_grid_size_from_block_shape(
     gy = ceil(data_shape[1] / block_shape[1])
     gx = ceil(data_shape[2] / block_shape[2])
     return gz, gy, gx
+
+
+@lru_cache()
+def number_of_encoding_bits(nb_values) -> int:
+    """Return the number of bits needed to encode the given values"""
+    for nb_bits in (0, 1, 2, 4, 8, 16, 32):
+        if (1 << nb_bits) >= nb_values:
+            return nb_bits
+    raise ValueError("Too many unique values in block")

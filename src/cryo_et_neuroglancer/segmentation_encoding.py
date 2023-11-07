@@ -4,93 +4,56 @@ import struct
 import numpy as np
 import dask.array as da
 
-from cryo_et_neuroglancer.utils import (
+import functools
+
+from .utils import (
     pad_block,
     get_grid_size_from_block_shape,
+    number_of_encoding_bits
 )
 from cryo_et_neuroglancer.chunk import Chunk
-
-DEBUG = False
 
 
 def _get_buffer_position(buffer: bytearray) -> int:
     """Return the current position in the buffer"""
-    if len(buffer) % 4 != 0:
-        raise ValueError("Buffer length must be a multiple of 4")
+    assert len(buffer) % 4 == 0, "Buffer length must be a multiple of 4"
     return len(buffer) // 4
 
 
-def _get_encoded_bits(unique_values: np.ndarray) -> int:
-    """Return the number of bits needed to encode the given values"""
-    if np.all(unique_values == 0) or len(unique_values) == 0:
-        return 0
-    bits = 1
-    while 2**bits < len(unique_values):
-        bits += 1
-    if bits > 32:
-        raise ValueError("Too many unique values in block")
-    return bits
+def _pack_encoded_values(encoded_values: np.ndarray, bits: int) -> bytes:
+    """
+    Pack the encoded values into 32bit unsigned integers
 
+    To view the packed values as a numpy array, use the following:
+    np.frombuffer(packed_values, dtype=np.uint32).view(f"u{encoded_bits}")
 
-# def _pack_encoded_values(encoded_values: np.ndarray, encoded_bits: int) -> bytes:
-#     """
-#     Pack the encoded values into 32bit unsigned integers
+    Parameters
+    ----------
+    encoded_values : np.ndarray
+        The encoded values
+    bits : int
+        The number of bits used to encode the values
 
-#     To view the packed values as a numpy array, use the following:
-#     np.frombuffer(packed_values, dtype=np.uint32).view(f"u{encoded_bits}")
-
-#     Parameters
-#     ----------
-#     encoded_values : np.ndarray
-#         The encoded values
-#     encoded_bits : int
-#         The number of bits used to encode the values
-
-#     Returns
-#     -------
-#     packed_values : bytes
-#         The packed values
-#     """
-#     if encoded_bits == 0:
-#         return bytes()
-#     values_per_uint32 = 32 // encoded_bits
-#     number_of_values = ceil(len(encoded_values) / values_per_uint32)
-#     padded_values = np.pad(
-#         encoded_values,
-#         (0, number_of_values * values_per_uint32 - len(encoded_values)),
-#     )
-#     if encoded_bits == 1:
-#         reshaped = padded_values.reshape((-1, 32)).astype(np.uint8)
-#         packed_values = np.packbits(reshaped, bitorder="little").tobytes()
-
-#         if DEBUG:
-#             values, binary = get_back_values_from_buffer(packed_values)
-#             assert np.all(binary == padded_values)
-#         return packed_values
-#     else:
-#         raise NotImplementedError("Only 1 bit encoding is implemented")
-#     # TODO implement other bit sizes
-#     # packed_values = 1
-#     # return packed_values.tobytes()
-
-def _pack_encoded_values(encoded_values, bits):
+    Returns
+    -------
+    packed_values : bytes
+        The packed values
+    """
     if bits == 0:
         return bytes()
-    else:
-        assert 32 % bits == 0
-        assert np.array_equal(encoded_values,
-                              encoded_values & ((1 << bits) - 1))
-        values_per_32bit = 32 // bits
-        padded_values = np.pad(encoded_values.astype("<I", casting="unsafe"),
-                               [(0, -len(encoded_values) % values_per_32bit)],
-                               mode="constant", constant_values=0)
-        assert len(padded_values) % values_per_32bit == 0
-        import functools
-        packed_values = functools.reduce(
-            np.bitwise_or,
-            (padded_values[shift::values_per_32bit] << (shift * bits)
-             for shift in range(values_per_32bit)))
-        return packed_values.tobytes()
+    assert 32 % bits == 0
+    assert np.array_equal(encoded_values,
+                            encoded_values & ((1 << bits) - 1))
+    values_per_32bit = 32 // bits
+    padded_values = np.pad(encoded_values.astype("<I", casting="unsafe"),
+                            [(0, -len(encoded_values) % values_per_32bit)],
+                            mode="constant", constant_values=0)
+    assert len(padded_values) % values_per_32bit == 0
+    packed_values = functools.reduce(
+        np.bitwise_or,
+        (padded_values[shift::values_per_32bit] << (shift * bits)
+            for shift in range(values_per_32bit)))
+    return packed_values.tobytes()
 
 
 def get_back_values_from_buffer(bytes_: bytes) -> tuple[np.ndarray, np.ndarray]:
@@ -182,7 +145,7 @@ def _create_lookup_table(
     values_in_bytes = unique_values.tobytes()
     if values_in_bytes not in stored_lookup_tables:
         lookup_table_offset = _get_buffer_position(buffer)
-        encoded_bits = _get_encoded_bits(unique_values)
+        encoded_bits = number_of_encoding_bits(len(unique_values))
         stored_lookup_tables[values_in_bytes] = (
             lookup_table_offset,
             encoded_bits,
@@ -217,6 +180,13 @@ def _create_encoded_values(
     return encoded_values_offset
 
 
+def _create_file_chunk_header(number_channels=1) -> bytearray:
+    buf = bytearray(4 * number_channels)
+    for offset in range(number_channels):
+        struct.pack_into("<I", buf, offset * 4, len(buf) // 4)
+    return buf
+
+
 def create_segmentation_chunk(
     dask_data: da.Array,
     dimensions: tuple[tuple[int, int, int], tuple[int, int, int]],
@@ -236,7 +206,6 @@ def create_segmentation_chunk(
             x * bx : (x + 1) * bx
         ]
         unique_values, indices = da.unique(block, return_inverse=True)
-        # TODO mismatch between dimensions and data size after padding
         if block.shape != block_size:
             block = pad_block(block, block_size)
 
@@ -253,14 +222,4 @@ def create_segmentation_chunk(
             block_offset,
         )
 
-    buf = bytearray(4 * 1)
-
-    # for channel in range(1):
-    #     # Write offset of the current channel into the header
-    #     assert len(buf) % 4 == 0
-    #     struct.pack_into("<I", buf, channel * 4, len(buf) // 4)
-    channel = 0
-    struct.pack_into("<I", buf, channel * 4, len(buf) // 4)
-    buf += buffer
-
-    return Chunk(buf, dimensions)
+    return Chunk(_create_file_chunk_header() + buffer, dimensions)
