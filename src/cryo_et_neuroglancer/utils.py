@@ -15,7 +15,7 @@ def pad_block(block: np.ndarray, block_size: tuple[int, int, int]) -> np.ndarray
             (0, block_size[1] - block.shape[1]),
             (0, block_size[2] - block.shape[2]),
         ),
-        mode='edge'
+        # mode='edge'
     )
 
 
@@ -69,7 +69,19 @@ def get_grid_size_from_block_shape(
 
 @lru_cache()
 def number_of_encoding_bits(nb_values: int) -> int:
-    """Return the number of bits needed to encode the given values"""
+    """
+    Return the number of bits needed to encode a number of values
+
+    Parameters
+    ----------
+    nb_values : int
+        The number of values that needs to be encoded
+
+    Returns
+    -------
+    int between (0, 1, 2, 4, 8, 16, 32)
+        The number of bits necessary
+    """
     for nb_bits in (0, 1, 2, 4, 8, 16, 32):
         if (1 << nb_bits) >= nb_values:
             return nb_bits

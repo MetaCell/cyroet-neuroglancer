@@ -197,7 +197,7 @@ def create_segmentation_chunk(
     # big enough to hold the 64-bit starting block headers
     buffer = bytearray(gx * gy * gz * 8)
 
-    # dask_data = da.moveaxis(dask_data, (0, 1, 2), (2, 1, 0)) ?
+    # data = np.moveaxis(data, (0, 1, 2), (2, 1, 0))
     for z, y, x in np.ndindex((gz, gy, gx)):
         block = data[
             z * bz : (z + 1) * bz,

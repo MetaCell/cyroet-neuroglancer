@@ -62,8 +62,10 @@ def main(
     dask_data = load_omezarr_data(filename)
     output_directory = filename.parent / f"precomputed-{filename.stem[:-5]}"
     output_directory.mkdir(parents=True, exist_ok=True)
+    import ipdb; ipdb.set_trace()  # fmt: skip
     for c in create_segmentation(dask_data, block_size):
         c.write_to_directory(output_directory / data_directory)
+
 
     metadata = _create_metadata(
         dask_data.chunksize, block_size, dask_data.shape, data_directory
@@ -74,10 +76,6 @@ def main(
 
 if __name__ == "__main__":
     # TODO create command line interface
-    # base_directory = Path("/media/starfish/LargeSSD/data/cryoET/data")
-    # actin_filename = base_directory / "00004_actin_ground_truth_zarr"
-    # microtubules_filename = base_directory / "00004_MT_ground_truth_zarr"
-
     if len(sys.argv) < 2:
         print("Missing argument (folder)")
         sys.exit(-1)
@@ -87,4 +85,3 @@ if __name__ == "__main__":
         sys.exit(-2)
     block_size = (32, 32, 32)
     main(actin_file_path, block_size)
-    # main(microtubules_filename, block_size)
