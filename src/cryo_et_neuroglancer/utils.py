@@ -1,18 +1,21 @@
 from math import ceil
 from typing import Iterator
+from functools import lru_cache
 
+import numpy as np
 import dask.array as da
 
 
-def pad_block(block: da.Array, block_size: tuple[int, int, int]) -> da.Array:
+def pad_block(block: np.ndarray, block_size: tuple[int, int, int]) -> np.ndarray:
     """Pad the block to the given block size with zeros"""
-    return da.pad(
+    return np.pad(
         block,
         (
             (0, block_size[0] - block.shape[0]),
             (0, block_size[1] - block.shape[1]),
             (0, block_size[2] - block.shape[2]),
         ),
+        # mode='edge'
     )
 
 
@@ -62,3 +65,24 @@ def get_grid_size_from_block_shape(
     gy = ceil(data_shape[1] / block_shape[1])
     gx = ceil(data_shape[2] / block_shape[2])
     return gz, gy, gx
+
+
+@lru_cache()
+def number_of_encoding_bits(nb_values: int) -> int:
+    """
+    Return the number of bits needed to encode a number of values
+
+    Parameters
+    ----------
+    nb_values : int
+        The number of values that needs to be encoded
+
+    Returns
+    -------
+    int between (0, 1, 2, 4, 8, 16, 32)
+        The number of bits necessary
+    """
+    for nb_bits in (0, 1, 2, 4, 8, 16, 32):
+        if (1 << nb_bits) >= nb_values:
+            return nb_bits
+    raise ValueError("Too many unique values in block")

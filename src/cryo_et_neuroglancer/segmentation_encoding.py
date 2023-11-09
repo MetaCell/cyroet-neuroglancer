@@ -1,38 +1,24 @@
-from math import ceil
 import struct
 
 import numpy as np
-import dask.array as da
 
-from cryo_et_neuroglancer.utils import (
+import functools
+
+from .utils import (
     pad_block,
     get_grid_size_from_block_shape,
+    number_of_encoding_bits
 )
 from cryo_et_neuroglancer.chunk import Chunk
-
-DEBUG = False
 
 
 def _get_buffer_position(buffer: bytearray) -> int:
     """Return the current position in the buffer"""
-    if len(buffer) % 4 != 0:
-        raise ValueError("Buffer length must be a multiple of 4")
+    assert len(buffer) % 4 == 0, "Buffer length must be a multiple of 4"
     return len(buffer) // 4
 
 
-def _get_encoded_bits(unique_values: np.ndarray) -> int:
-    """Return the number of bits needed to encode the given values"""
-    if np.all(unique_values == 0) or len(unique_values) == 0:
-        return 0
-    bits = 1
-    while 2**bits < len(unique_values):
-        bits += 1
-    if bits > 32:
-        raise ValueError("Too many unique values in block")
-    return bits
-
-
-def _pack_encoded_values(encoded_values: np.ndarray, encoded_bits: int) -> bytes:
+def _pack_encoded_values(encoded_values: np.ndarray, bits: int) -> bytes:
     """
     Pack the encoded values into 32bit unsigned integers
 
@@ -43,7 +29,7 @@ def _pack_encoded_values(encoded_values: np.ndarray, encoded_bits: int) -> bytes
     ----------
     encoded_values : np.ndarray
         The encoded values
-    encoded_bits : int
+    bits : int
         The number of bits used to encode the values
 
     Returns
@@ -51,25 +37,21 @@ def _pack_encoded_values(encoded_values: np.ndarray, encoded_bits: int) -> bytes
     packed_values : bytes
         The packed values
     """
-    if encoded_bits == 0:
+    if bits == 0:
         return bytes()
-    values_per_uint32 = 32 // encoded_bits
-    number_of_values = ceil(len(encoded_values) / values_per_uint32)
-    padded_values = np.pad(
-        encoded_values,
-        (0, number_of_values * values_per_uint32 - len(encoded_values)),
-    )
-    if encoded_bits == 1:
-        reshaped = padded_values.reshape((-1, 32)).astype(np.uint8)
-        packed_values: bytes = np.packbits(reshaped, bitorder="little").tobytes()
-
-        if DEBUG:
-            values, binary = get_back_values_from_buffer(packed_values)
-            assert np.all(binary == padded_values)
-        return packed_values
-    else:
-        # TODO implement other bit sizes
-        raise NotImplementedError("Only 1 bit encoding is implemented")
+    assert 32 % bits == 0
+    assert np.array_equal(encoded_values,
+                            encoded_values & ((1 << bits) - 1))
+    values_per_32bit = 32 // bits
+    padded_values = np.pad(encoded_values.astype("<I", casting="unsafe"),
+                            [(0, -len(encoded_values) % values_per_32bit)],
+                            mode="constant", constant_values=0)
+    assert len(padded_values) % values_per_32bit == 0
+    packed_values: np.ndarray = functools.reduce(
+        np.bitwise_or,
+        (padded_values[shift::values_per_32bit] << (shift * bits)
+            for shift in range(values_per_32bit)))
+    return packed_values.tobytes()
 
 
 def get_back_values_from_buffer(bytes_: bytes) -> tuple[np.ndarray, np.ndarray]:
@@ -135,7 +117,7 @@ def _create_block_header(
 def _create_lookup_table(
     buffer: bytearray,
     stored_lookup_tables: dict[bytes, tuple[int, int]],
-    unique_values: da.Array,
+    unique_values: np.ndarray,
 ) -> tuple[int, int]:
     """
     Create a lookup table for the given values
@@ -157,11 +139,11 @@ def _create_lookup_table(
     encoded_bits : int
         The number of bits used to encode the values
     """
-    unique_values = unique_values.astype(np.uint32).compute()
+    unique_values = unique_values.astype(np.uint32)
     values_in_bytes = unique_values.tobytes()
     if values_in_bytes not in stored_lookup_tables:
         lookup_table_offset = _get_buffer_position(buffer)
-        encoded_bits = _get_encoded_bits(unique_values)
+        encoded_bits = number_of_encoding_bits(len(unique_values))
         stored_lookup_tables[values_in_bytes] = (
             lookup_table_offset,
             encoded_bits,
@@ -173,7 +155,7 @@ def _create_lookup_table(
 
 
 def _create_encoded_values(
-    buffer: bytearray, positions: da.Array, encoded_bits: int
+    buffer: bytearray, positions: np.ndarray, encoded_bits: int
 ) -> int:
     """Create the encoded values for the given values
 
@@ -192,29 +174,39 @@ def _create_encoded_values(
         The offset in the buffer to the encoded values
     """
     encoded_values_offset = _get_buffer_position(buffer)
-    buffer += _pack_encoded_values(positions.compute(), encoded_bits)
+    buffer += _pack_encoded_values(positions, encoded_bits)
     return encoded_values_offset
 
 
+def _create_file_chunk_header(number_channels: int=1) -> bytearray:
+    buf = bytearray(4 * number_channels)
+    for offset in range(number_channels):
+        struct.pack_into("<I", buf, offset * 4, len(buf) // 4)
+    return buf
+
+
 def create_segmentation_chunk(
-    dask_data: da.Array,
+    data: np.ndarray,
     dimensions: tuple[tuple[int, int, int], tuple[int, int, int]],
     block_size: tuple[int, int, int] = (8, 8, 8),
 ) -> Chunk:
     """Convert data in a dask array to a neuroglancer segmentation chunk"""
     bz, by, bx = block_size
-    gz, gy, gx = get_grid_size_from_block_shape(dask_data.shape, block_size)
+    gz, gy, gx = get_grid_size_from_block_shape(data.shape, block_size)
     stored_lookup_tables: dict[bytes, tuple[int, int]] = {}
     # big enough to hold the 64-bit starting block headers
     buffer = bytearray(gx * gy * gz * 8)
 
-    for z, y, x in np.ndindex(gz, gy, gx):
-        block = dask_data[
-            z * bz : (z + 1) * bz, y * by : (y + 1) * by, x * bx : (x + 1) * bx
+    # data = np.moveaxis(data, (0, 1, 2), (2, 1, 0))
+    for z, y, x in np.ndindex((gz, gy, gx)):
+        block = data[
+            z * bz : (z + 1) * bz,
+            y * by : (y + 1) * by,
+            x * bx : (x + 1) * bx
         ]
-        unique_values, indices = da.unique(block, return_inverse=True)
-        # TODO mismatch between dimensions and data size after padding
-        block = pad_block(block, block_size)
+        unique_values, indices = np.unique(block, return_inverse=True)
+        if block.shape != block_size:
+            block = pad_block(block, block_size)
 
         lookup_table_offset, encoded_bits = _create_lookup_table(
             buffer, stored_lookup_tables, unique_values
@@ -229,4 +221,4 @@ def create_segmentation_chunk(
             block_offset,
         )
 
-    return Chunk(buffer, dimensions)
+    return Chunk(_create_file_chunk_header() + buffer, dimensions)
