@@ -32,7 +32,7 @@ def _create_metadata(
                 # TODO resolution is in nm, while for others there is no units
                 "resolution": [1, 1, 1],
                 "key": data_directory,
-                "size": list(data_size),
+                "size": data_size[::-1]  # reverse the data size to pass from X-Y-Z to Z-Y-X
             }
         ],
         "type": "segmentation",
@@ -62,7 +62,6 @@ def main(
     dask_data = load_omezarr_data(filename)
     output_directory = filename.parent / f"precomputed-{filename.stem[:-5]}"
     output_directory.mkdir(parents=True, exist_ok=True)
-    dask_data = da.moveaxis(dask_data, (0, 1, 2), (2, 1, 0))
     for c in create_segmentation(dask_data, block_size):
         c.write_to_directory(output_directory / data_directory)
 
