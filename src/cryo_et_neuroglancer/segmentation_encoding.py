@@ -4,11 +4,7 @@ import numpy as np
 
 import functools
 
-from .utils import (
-    pad_block,
-    get_grid_size_from_block_shape,
-    number_of_encoding_bits
-)
+from .utils import pad_block, get_grid_size_from_block_shape, number_of_encoding_bits
 from cryo_et_neuroglancer.chunk import Chunk
 
 
@@ -40,17 +36,22 @@ def _pack_encoded_values(encoded_values: np.ndarray, bits: int) -> bytes:
     if bits == 0:
         return bytes()
     assert 32 % bits == 0
-    assert np.array_equal(encoded_values,
-                            encoded_values & ((1 << bits) - 1))
+    assert np.array_equal(encoded_values, encoded_values & ((1 << bits) - 1))
     values_per_32bit = 32 // bits
-    padded_values = np.pad(encoded_values.astype("<I", casting="unsafe"),
-                            [(0, -len(encoded_values) % values_per_32bit)],
-                            mode="constant", constant_values=0)
+    padded_values = np.pad(
+        encoded_values.astype("<I", casting="unsafe"),
+        [(0, -len(encoded_values) % values_per_32bit)],
+        mode="constant",
+        constant_values=0,
+    )
     assert len(padded_values) % values_per_32bit == 0
     packed_values: np.ndarray = functools.reduce(
         np.bitwise_or,
-        (padded_values[shift::values_per_32bit] << (shift * bits)
-            for shift in range(values_per_32bit)))
+        (
+            padded_values[shift::values_per_32bit] << (shift * bits)
+            for shift in range(values_per_32bit)
+        ),
+    )
     return packed_values.tobytes()
 
 
@@ -178,7 +179,7 @@ def _create_encoded_values(
     return encoded_values_offset
 
 
-def _create_file_chunk_header(number_channels: int=1) -> bytearray:
+def _create_file_chunk_header(number_channels: int = 1) -> bytearray:
     buf = bytearray(4 * number_channels)
     for offset in range(number_channels):
         struct.pack_into("<I", buf, offset * 4, len(buf) // 4)
@@ -200,9 +201,7 @@ def create_segmentation_chunk(
     # data = np.moveaxis(data, (0, 1, 2), (2, 1, 0))
     for z, y, x in np.ndindex((gz, gy, gx)):
         block = data[
-            z * bz : (z + 1) * bz,
-            y * by : (y + 1) * by,
-            x * bx : (x + 1) * bx
+            z * bz : (z + 1) * bz, y * by : (y + 1) * by, x * bx : (x + 1) * bx
         ]
         unique_values, indices = np.unique(block, return_inverse=True)
         if block.shape != block_size:

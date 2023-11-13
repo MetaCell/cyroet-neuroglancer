@@ -1,9 +1,13 @@
 import pytest
-from cryo_et_neuroglancer.utils import get_grid_size_from_block_shape, number_of_encoding_bits
+from cryo_et_neuroglancer.utils import (
+    get_grid_size_from_block_shape,
+    number_of_encoding_bits,
+)
 
 
 @pytest.mark.parametrize(
-    "n, expected", [
+    "n, expected",
+    [
         (0, 0),
         (1, 0),
         (2, 1),
@@ -12,7 +16,7 @@ from cryo_et_neuroglancer.utils import get_grid_size_from_block_shape, number_of
         (17, 8),
         (32, 8),
         (2**32, 32),
-    ]
+    ],
 )
 def test__number_of_encoding_bits(n, expected):
     assert number_of_encoding_bits(n) == expected
@@ -27,11 +31,12 @@ def test___number_of_encoding_bits__to_many_values():
 
 
 @pytest.mark.parametrize(
-    "dshape, bshape, expected", [
+    "dshape, bshape, expected",
+    [
         ((16, 16, 16), (8, 8, 8), (2, 2, 2)),
         ((17, 17, 17), (8, 8, 8), (3, 3, 3)),
         ((26, 26, 26), (8, 8, 8), (4, 4, 4)),
-    ]
+    ],
 )
 def test__get_grid_size_from_block_shape(dshape, bshape, expected):
     assert get_grid_size_from_block_shape(dshape, bshape) == expected

@@ -33,7 +33,9 @@ def _create_metadata(
                 # TODO resolution is in nm, while for others there is no units
                 "resolution": [1, 1, 1],
                 "key": data_directory,
-                "size": data_size[::-1]  # reverse the data size to pass from X-Y-Z to Z-Y-X
+                "size": data_size[
+                    ::-1
+                ],  # reverse the data size to pass from X-Y-Z to Z-Y-X
             }
         ],
         "type": "segmentation",
@@ -57,14 +59,16 @@ def main(
     filename: Path,
     block_size: tuple[int, int, int] = (64, 64, 64),
     data_directory: str = "data",
-    delete_existing_output_directory: bool = False
+    delete_existing_output_directory: bool = False,
 ) -> None:
     """Convert the given OME-Zarr file to neuroglancer segmentation format with the given block size"""
     print(f"Converting {filename} to neuroglancer compressed segmentation format")
     dask_data = load_omezarr_data(filename)
     output_directory = filename.parent / f"precomputed-{filename.stem[:-5]}"
     if delete_existing_output_directory and output_directory.exists():
-        print(f"The output directory {output_directory!s} exists, deleting before starting the conversion")
+        print(
+            f"The output directory {output_directory!s} exists, deleting before starting the conversion"
+        )
         shutil.rmtree(output_directory)
     elif not delete_existing_output_directory and output_directory.exists():
         print(f"The output directory {output_directory!s} already exists")
@@ -72,7 +76,6 @@ def main(
     output_directory.mkdir(parents=True, exist_ok=True)
     for c in create_segmentation(dask_data, block_size):
         c.write_to_directory(output_directory / data_directory)
-
 
     metadata = _create_metadata(
         dask_data.chunksize, block_size, dask_data.shape, data_directory
