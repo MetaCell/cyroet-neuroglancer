@@ -18,6 +18,9 @@ dev = [
     "pytest-cov",
     "mypy",
 ]
+cli = [
+    "tqdm",
+]
 
 [build-system]
 requires = ["setuptools>= 40.9.0", "wheel"]
@@ -31,3 +34,6 @@ exclude = ["examples", "tests", "notebooks"]
 [tool.mypy]
 mypy_path = "src"
 ignore_missing_imports = true
+
+[project.scripts]
+cryoet-converter = "cryo_et_neuroglancer.cli:main"
