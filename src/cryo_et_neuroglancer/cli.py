@@ -11,8 +11,9 @@ def encode_segmentation(
     if not file_path.exists():
         print(f"The input ZARR folder {file_path!s} doesn't exist")
         return 1
+    block_size = int(block_size)
     block_shape = (block_size, block_size, block_size)
-    output_path = Path(output)
+    output_path = Path(output) if output else output
     segmentation_encode(
         file_path,
         block_shape,
