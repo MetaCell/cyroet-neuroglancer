@@ -1,11 +1,14 @@
 import struct
 import pytest
+from cryo_et_neuroglancer.chunk import Chunk
 from cryo_et_neuroglancer.segmentation_encoding import (
     _get_buffer_position,
     _create_block_header,
     _create_lookup_table,
     _pack_encoded_values,
     _create_encoded_values,
+    _create_file_chunk_header,
+    create_segmentation_chunk,
 )
 from ctypes import c_uint64, LittleEndianStructure
 import numpy as np
@@ -103,3 +106,89 @@ def test__create_encoded_values():
     offset = _create_encoded_values(buffer, np.array([1, 0, 2]), 2)
     assert offset == 2
     assert buffer == struct.pack('<QI', 0, 0b100001)  # we need to pad manually for the test
+
+
+def test__create_file_chunck_header():
+    buffer = _create_file_chunk_header()
+    assert buffer == struct.pack('<I', 1)
+
+
+def test__create_segmentation_chunk():
+    # We take a small 8x8 cube
+    array = [
+        [[0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1]],
+
+        [[0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1]],
+
+         [[0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1]],
+
+         [[0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1]],
+
+         [[0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1]],
+
+         [[0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1]],
+
+         [[0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1]],
+
+         [[0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1],
+         [0, 0, 0, 0],
+         [1, 1, 1, 1]],
+    ]
+    chunk: Chunk = create_segmentation_chunk(np.array(array), dimensions=((0, 0, 0), (8, 8, 8)), block_size=(8, 8, 8))
+
+    assert chunk.dimensions == ((0, 0, 0), (8, 8, 8))
+    # TODO expand me!

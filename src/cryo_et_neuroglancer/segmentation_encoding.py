@@ -62,20 +62,19 @@ def _pack_encoded_values(values: np.ndarray, bits: int) -> bytes:
         constant_values=0,
     )
     assert len(padded_values) % values_per_32bit == 0
-    # packed_values: np.ndarray = functools.reduce(
-    #     np.bitwise_or,
-    #     (
-    #         padded_values[shift::values_per_32bit] << (shift * bits)
-    #         for shift in range(values_per_32bit)
-    #     ),
-    # )
-    # return packed_values.tobytes()
-
-    packed_values: int = functools.reduce(
-        operator.or_,
-        (value << (shift * bits) for shift, value in enumerate(padded_values)),
+    packed_values: np.ndarray = functools.reduce(
+        np.bitwise_or,
+        (
+            padded_values[shift::values_per_32bit] << (shift * bits)
+            for shift in range(values_per_32bit)
+        ),
     )
-    return struct.pack("<I", packed_values)
+    return packed_values.tobytes()
+    # packed_values: int = functools.reduce(
+    #     operator.or_,
+    #     (value << (shift * bits) for shift, value in enumerate(padded_values)),
+    # )
+    # return struct.pack("<I", packed_values)
 
 
 def get_back_values_from_buffer(bytes_: bytes) -> tuple[np.ndarray, np.ndarray]:
