@@ -5,11 +5,10 @@ from cryo_et_neuroglancer.segmentation_encoding import (
     _create_block_header,
     _create_lookup_table,
     _pack_encoded_values,
+    _create_encoded_values,
 )
 from ctypes import c_uint64, LittleEndianStructure
 import numpy as np
-
-from cryo_et_neuroglancer.utils import number_of_encoding_bits
 
 
 # Used for decoding the header
@@ -92,3 +91,15 @@ def test__pack_encoded_values__needs_32multiple():
     nb_bits = 3
     with pytest.raises(AssertionError):
         _pack_encoded_values(np.array(array), nb_bits)
+
+
+def test__create_encoded_values():
+    buffer = bytearray()  # will start in 0
+    offset = _create_encoded_values(buffer, np.array([1, 0, 2]), 2)
+    assert offset == 0
+    assert buffer == struct.pack('<I', 0b100001)
+
+    buffer = bytearray(8)  # will start in 2
+    offset = _create_encoded_values(buffer, np.array([1, 0, 2]), 2)
+    assert offset == 2
+    assert buffer == struct.pack('<QI', 0, 0b100001)  # we need to pad manually for the test

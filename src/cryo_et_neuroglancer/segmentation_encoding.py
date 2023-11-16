@@ -187,7 +187,7 @@ def _create_encoded_values(
     ----------
     buffer: bytearray
         The buffer to write the encoded values to
-    positions: da.Array
+    positions: np.ndarray
         The values to encode (positions in the lookup table)
     encoded_bits: int
         The number of bits used to encode the values
