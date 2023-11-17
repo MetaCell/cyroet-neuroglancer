@@ -44,7 +44,7 @@ def parse_args(args):
         "-o", "--output", required=False, help="Output folder to produce"
     )
     subcommand.add_argument(
-        "-b", "--block-size", required=False, default=64, help="Bloc size"
+        "-b", "--block-size", required=False, default=64, help="Block size"
     )
     subcommand.set_defaults(func=encode_segmentation)
 
