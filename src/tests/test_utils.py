@@ -22,7 +22,7 @@ def test__number_of_encoding_bits(n, expected):
     assert number_of_encoding_bits(n) == expected
 
 
-def test___number_of_encoding_bits__to_many_values():
+def test___number_of_encoding_bits__too_many_values():
     with pytest.raises(ValueError):
         number_of_encoding_bits(2**33)
 
