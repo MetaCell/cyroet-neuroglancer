@@ -33,7 +33,9 @@ def _create_metadata(
                 # TODO resolution is in nm, while for others there is no units
                 "resolution": [1, 1, 1],
                 "key": data_directory,
-                "size": data_size[::-1]  # reverse the data size to pass from X-Y-Z to Z-Y-X
+                "size": data_size[
+                    ::-1
+                ],  # reverse the data size to pass from X-Y-Z to Z-Y-X
             }
         ],
         "type": "segmentation",
@@ -65,7 +67,9 @@ def main(
     dask_data = load_omezarr_data(filename)
     output_directory = output_path or filename.parent / f"precomputed-{filename.stem[:-5]}"
     if delete_existing_output_directory and output_directory.exists():
-        print(f"The output directory {output_directory!s} exists, deleting before starting the conversion")
+        print(
+            f"The output directory {output_directory!s} exists, deleting before starting the conversion"
+        )
         shutil.rmtree(output_directory)
     elif not delete_existing_output_directory and output_directory.exists():
         print(f"The output directory {output_directory!s} already exists")
