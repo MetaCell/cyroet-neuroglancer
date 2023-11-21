@@ -1,25 +1,46 @@
 import argparse
 import sys
 from pathlib import Path
+from typing import Optional
+
+from .write_segmentation import main as segmentation_encode
 
 from .write_segmentation import main as segmentation_encode
 
 
 def encode_segmentation(
-    zarr_path: str, skip_existing: bool, output: str, block_size: int
+    zarr_path: str,
+    skip_existing: bool,
+    output: str,
+    block_size: int,
+    resolution: Optional[tuple[float, float, float] | list[float]],
 ):
     file_path = Path(zarr_path)
     if not file_path.exists():
         print(f"The input ZARR folder {file_path!s} doesn't exist")
         return 1
+    if resolution is None:
+        print("No resolution provided, using default value of 1.348nm")
+        resolution = [
+            1.348,
+        ]
+    if len(resolution) == 1:
+        resolution = (resolution[0],) * 3  # type: ignore
+    if len(resolution) != 3:
+        print("Resolution tuple must have 3 values")
+        return 2
+    if any(x <= 0 for x in resolution):
+        print("Resolution component has to be > 0")
+        return 3
     block_size = int(block_size)
     block_shape = (block_size, block_size, block_size)
-    output_path = Path(output) if output else output
+    output_path = Path(output) if output else None
     segmentation_encode(
         file_path,
         block_shape,
         delete_existing_output_directory=not skip_existing,
         output_path=output_path,
+        resolution=resolution,  # type: ignore
     )
     return 0
 
@@ -46,6 +67,13 @@ def parse_args(args):
     )
     subcommand.add_argument(
         "-b", "--block-size", required=False, default=64, help="Block size"
+    )
+    subcommand.add_argument(
+        "-r",
+        "--resolution",
+        nargs="+",
+        type=float,
+        help="Resolution, must be either 3 values for X Y Z separated by spaces, or a single value that will be set for X Y and Z",
     )
     subcommand.set_defaults(func=encode_segmentation)
 

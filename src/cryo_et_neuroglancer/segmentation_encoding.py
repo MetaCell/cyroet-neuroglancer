@@ -3,8 +3,7 @@ import struct
 
 import numpy as np
 
-from cryo_et_neuroglancer.chunk import Chunk
-
+from .chunk import Chunk
 from .utils import get_grid_size_from_block_shape, number_of_encoding_bits, pad_block
 
 
@@ -214,6 +213,8 @@ def create_segmentation_chunk(
 ) -> Chunk:
     """Convert data in a dask array to a neuroglancer segmentation chunk"""
     bz, by, bx = block_size
+    if len(data.shape) != 3:
+        raise ValueError("Data must be 3-dimensional")
     gz, gy, gx = get_grid_size_from_block_shape(data.shape, block_size)
     stored_lookup_tables: dict[bytes, tuple[int, int]] = {}
     # big enough to hold the 64-bit starting block headers
