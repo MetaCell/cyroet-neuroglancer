@@ -5,7 +5,7 @@ from typing import Optional
 
 import neuroglancer.cli
 
-from .url_creation import viewer_to_url
+from .url_creation import load_json_to_url, viewer_to_url
 from .write_segmentation import main as segmentation_encode
 
 
@@ -50,7 +50,7 @@ def parse_args(args):
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
 
-    # metadata check
+    # Segmentation encoding
     subcommand = subparsers.add_parser(
         "encode-segmentation", help="Encode segmentation file"
     )
@@ -80,10 +80,19 @@ def parse_args(args):
 
     # URL creation
     subcommand = subparsers.add_parser(
-        "create-url", help="Create URL and JSON state from a neuroglancer viewer"
+        "create-url", help="Open a neuroglancer viewer and creates a URL and JSON state on-demand"
     )
     neuroglancer.cli.add_server_arguments(subcommand)
     subcommand.set_defaults(func=viewer_to_url)
+
+    # JSON loading
+    subcommand = subparsers.add_parser(
+        "load-state", help="Load a neuroglancer JSON state file in a neuroglancer viewer"
+    )
+    subcommand.add_argument("path", help="JSON state file to load")
+    neuroglancer.cli.add_server_arguments(subcommand)
+    subcommand.set_defaults(func=load_json_to_url)
+
 
     return parser.parse_args(args)
 
