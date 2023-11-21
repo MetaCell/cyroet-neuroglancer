@@ -1,7 +1,6 @@
 import struct
 
 import numpy as np
-import operator
 
 import functools
 
