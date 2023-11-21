@@ -90,6 +90,8 @@ def main(
     for c in create_segmentation(dask_data, block_size):
         c.write_to_directory(output_directory / data_directory)
 
+    if len(dask_data.chunksize) != 3:
+        raise ValueError(f"Expected 3 chunk dimensions, got {len(dask_data.chunksize)}")
     metadata = _create_metadata(
         dask_data.chunksize, block_size, dask_data.shape, data_directory, resolution
     )
