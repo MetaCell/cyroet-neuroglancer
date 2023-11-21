@@ -1,11 +1,10 @@
+import functools
 import struct
 
 import numpy as np
 
-import functools
-
-from .utils import pad_block, get_grid_size_from_block_shape, number_of_encoding_bits
-from cryo_et_neuroglancer.chunk import Chunk
+from .chunk import Chunk
+from .utils import get_grid_size_from_block_shape, number_of_encoding_bits, pad_block
 
 
 def _get_buffer_position(buffer: bytearray) -> int:

@@ -1,17 +1,18 @@
+import shutil
+import sys
 from pathlib import Path
 from typing import Any, Iterator, Optional
-from tqdm import tqdm
-import numpy as np
-import dask.array as da
-from cryo_et_neuroglancer.chunk import Chunk
-import sys
-import shutil
 
-from cryo_et_neuroglancer.utils import iterate_chunks
-from cryo_et_neuroglancer.segmentation_encoding import (
+import dask.array as da
+import numpy as np
+from tqdm import tqdm
+
+from .chunk import Chunk
+from .io import load_omezarr_data, write_metadata
+from .segmentation_encoding import (
     create_segmentation_chunk,
 )
-from cryo_et_neuroglancer.io import load_omezarr_data, write_metadata
+from .utils import iterate_chunks
 
 
 def _create_metadata(

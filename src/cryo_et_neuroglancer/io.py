@@ -1,9 +1,10 @@
-from typing import Any
 import json
+from pathlib import Path
+from typing import Any
+
+import dask.array as da
 from ome_zarr.io import parse_url
 from ome_zarr.reader import Reader
-from pathlib import Path
-import dask.array as da
 
 
 def load_omezarr_data(input_filepath: Path) -> da.Array:

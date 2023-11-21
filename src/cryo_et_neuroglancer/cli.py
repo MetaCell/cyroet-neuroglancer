@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-
 from .write_segmentation import main as segmentation_encode
 
 
