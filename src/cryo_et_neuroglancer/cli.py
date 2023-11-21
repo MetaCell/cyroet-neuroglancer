@@ -1,7 +1,8 @@
 import argparse
 import sys
-from .write_segmentation import main as segmentation_encode
 from pathlib import Path
+
+from .write_segmentation import main as segmentation_encode
 
 
 def encode_segmentation(

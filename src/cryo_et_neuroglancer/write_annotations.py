@@ -1,13 +1,13 @@
 import argparse
 import json
-import ndjson
 from pathlib import Path
 from typing import Any
 
+import ndjson
 import neuroglancer
-import neuroglancer.write_annotations
-import neuroglancer.static_file_server
 import neuroglancer.cli
+import neuroglancer.static_file_server
+import neuroglancer.write_annotations
 
 
 def load_data(

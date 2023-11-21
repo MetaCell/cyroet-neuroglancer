@@ -1,17 +1,16 @@
+import shutil
+import sys
 from pathlib import Path
 from typing import Any, Iterator
-from tqdm import tqdm
-import numpy as np
-import dask.array as da
-from cryo_et_neuroglancer.chunk import Chunk
-import sys
-import shutil
 
-from cryo_et_neuroglancer.utils import iterate_chunks
-from cryo_et_neuroglancer.segmentation_encoding import (
-    create_segmentation_chunk,
-)
+import dask.array as da
+import numpy as np
+from tqdm import tqdm
+
+from cryo_et_neuroglancer.chunk import Chunk
 from cryo_et_neuroglancer.io import load_omezarr_data, write_metadata
+from cryo_et_neuroglancer.segmentation_encoding import create_segmentation_chunk
+from cryo_et_neuroglancer.utils import iterate_chunks
 
 
 def _create_metadata(
@@ -60,12 +59,14 @@ def main(
     block_size: tuple[int, int, int] = (64, 64, 64),
     data_directory: str = "data",
     delete_existing_output_directory: bool = False,
-    output_path = None
+    output_path=None,
 ) -> None:
     """Convert the given OME-Zarr file to neuroglancer segmentation format with the given block size"""
     print(f"Converting {filename} to neuroglancer compressed segmentation format")
     dask_data = load_omezarr_data(filename)
-    output_directory = output_path or filename.parent / f"precomputed-{filename.stem[:-5]}"
+    output_directory = (
+        output_path or filename.parent / f"precomputed-{filename.stem[:-5]}"
+    )
     if delete_existing_output_directory and output_directory.exists():
         print(
             f"The output directory {output_directory!s} exists, deleting before starting the conversion"
