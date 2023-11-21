@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Iterator, Optional
 from tqdm import tqdm
 import numpy as np
 import dask.array as da
@@ -60,7 +60,7 @@ def main(
     block_size: tuple[int, int, int] = (64, 64, 64),
     data_directory: str = "data",
     delete_existing_output_directory: bool = False,
-    output_path=None,
+    output_path: Optional[Path] = None,
     resolution: tuple[int, int, int] = (1, 1, 1),
 ) -> None:
     """Convert the given OME-Zarr file to neuroglancer segmentation format with the given block size"""
@@ -70,10 +70,18 @@ def main(
         output_path or filename.parent / f"precomputed-{filename.stem[:-5]}"
     )
     if delete_existing_output_directory and output_directory.exists():
-        print(
-            f"The output directory {output_directory!s} exists, deleting before starting the conversion"
-        )
-        shutil.rmtree(output_directory)
+        contents = list(output_directory.iterdir())
+        content_names = sorted([c.name for c in contents])
+        if content_names != ["data", "info"]:
+            print(
+                f"The output directory {output_directory!s} exists and contains non-conversion related files, not deleting it"
+            )
+            sys.exit(1)
+        else:
+            print(
+                f"The output directory {output_directory!s} exists from a previous run, deleting before starting the conversion"
+            )
+            shutil.rmtree(output_directory)
     elif not delete_existing_output_directory and output_directory.exists():
         print(f"The output directory {output_directory!s} already exists")
         sys.exit(1)
@@ -86,16 +94,3 @@ def main(
     )
     write_metadata(metadata, output_directory)
     print(f"Wrote segmentation to {output_directory}")
-
-
-if __name__ == "__main__":
-    # TODO create command line interface
-    if len(sys.argv) < 2:
-        print("Missing argument (folder)")
-        sys.exit(-1)
-    actin_file_path = Path(sys.argv[1])
-    if not actin_file_path.exists():
-        print("The data folder doesn't exist")
-        sys.exit(-2)
-    block_size = (32, 32, 32)
-    main(actin_file_path, block_size, delete_existing_output_directory=True)
