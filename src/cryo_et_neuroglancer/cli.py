@@ -9,6 +9,14 @@ from .url_creation import load_jsonstate_to_browser, viewer_to_url
 from .write_segmentation import main as segmentation_encode
 
 
+def handle_json_load(path: str, **kwargs):
+    json_path = Path(path)
+    if not json_path.exists():
+        print(f"JSON file {json_path.absolute()} does not exit")
+        return -1
+    return load_jsonstate_to_browser(json_path, **kwargs)
+
+
 def encode_segmentation(
     zarr_path: str,
     skip_existing: bool,
@@ -93,7 +101,7 @@ def parse_args(args):
     )
     subcommand.add_argument("path", help="JSON state file to load")
     neuroglancer.cli.add_server_arguments(subcommand)
-    subcommand.set_defaults(func=load_jsonstate_to_browser)
+    subcommand.set_defaults(func=handle_json_load)
 
     return parser.parse_args(args)
 
