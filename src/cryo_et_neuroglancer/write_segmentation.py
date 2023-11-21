@@ -93,7 +93,11 @@ def main(
     if len(dask_data.chunksize) != 3:
         raise ValueError(f"Expected 3 chunk dimensions, got {len(dask_data.chunksize)}")
     metadata = _create_metadata(
-        dask_data.chunksize, block_size, dask_data.shape, data_directory, resolution  # type: ignore
+        dask_data.chunksize,
+        block_size,
+        dask_data.shape,
+        data_directory,
+        resolution,  # type: ignore
     )
     write_metadata(metadata, output_directory)
     print(f"Wrote segmentation to {output_directory}")
