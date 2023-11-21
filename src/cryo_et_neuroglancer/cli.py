@@ -59,7 +59,13 @@ def parse_args(args):
     subcommand.add_argument(
         "-b", "--block-size", required=False, default=64, help="Block size"
     )
-    subcommand.add_argument("-r", "--resolution", nargs="+", type=float)
+    subcommand.add_argument(
+        "-r",
+        "--resolution",
+        nargs="+",
+        type=float,
+        help="Resolution, must be either 3 values for X Y Z separated by spaces, or a single value that will be set for X Y and Z",
+    )
     subcommand.set_defaults(func=encode_segmentation)
 
     return parser.parse_args(args)
