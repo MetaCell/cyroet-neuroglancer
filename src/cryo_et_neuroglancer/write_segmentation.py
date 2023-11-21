@@ -19,6 +19,7 @@ def _create_metadata(
     block_size: tuple[int, int, int],
     data_size: tuple[int, int, int],
     data_directory: str,
+    resolution: tuple[int, int, int] = (1, 1, 1),
 ) -> dict[str, Any]:
     """Create the metadata for the segmentation"""
     metadata = {
@@ -27,15 +28,14 @@ def _create_metadata(
         "num_channels": 1,
         "scales": [
             {
-                "chunk_sizes": [list(chunk_size)],
+                "chunk_sizes": [chunk_size],
                 "encoding": "compressed_segmentation",
-                "compressed_segmentation_block_size": list(block_size),
-                # TODO resolution is in nm, while for others there is no units
-                "resolution": [1, 1, 1],
+                "compressed_segmentation_block_size": block_size,
+                "resolution": resolution,
                 "key": data_directory,
                 "size": data_size[
                     ::-1
-                ],  # reverse the data size to pass from X-Y-Z to Z-Y-X
+                ],  # reverse the data size to pass from Z-Y-X to X-Y-Z
             }
         ],
         "type": "segmentation",
@@ -60,12 +60,15 @@ def main(
     block_size: tuple[int, int, int] = (64, 64, 64),
     data_directory: str = "data",
     delete_existing_output_directory: bool = False,
-    output_path = None
+    output_path=None,
+    resolution: tuple[int, int, int] = (1, 1, 1),
 ) -> None:
     """Convert the given OME-Zarr file to neuroglancer segmentation format with the given block size"""
     print(f"Converting {filename} to neuroglancer compressed segmentation format")
     dask_data = load_omezarr_data(filename)
-    output_directory = output_path or filename.parent / f"precomputed-{filename.stem[:-5]}"
+    output_directory = (
+        output_path or filename.parent / f"precomputed-{filename.stem[:-5]}"
+    )
     if delete_existing_output_directory and output_directory.exists():
         print(
             f"The output directory {output_directory!s} exists, deleting before starting the conversion"
@@ -79,7 +82,7 @@ def main(
         c.write_to_directory(output_directory / data_directory)
 
     metadata = _create_metadata(
-        dask_data.chunksize, block_size, dask_data.shape, data_directory
+        dask_data.chunksize, block_size, dask_data.shape, data_directory, resolution
     )
     write_metadata(metadata, output_directory)
     print(f"Wrote segmentation to {output_directory}")
