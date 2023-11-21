@@ -58,7 +58,7 @@ def _unpack_encoded_values(
     mask = (1 << bits) - 1
 
     values = (r[0] for r in struct.iter_unpack("<I", packed_values))
-    res = []
+    res: list[int] = []
     for intval in values:
         res.extend(
             (intval >> (shift * bits)) & mask for shift in range(values_per_word)

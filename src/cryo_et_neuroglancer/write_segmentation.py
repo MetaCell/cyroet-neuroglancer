@@ -20,7 +20,7 @@ def _create_metadata(
     block_size: tuple[int, int, int],
     data_size: tuple[int, int, int],
     data_directory: str,
-    resolution: tuple[int, int, int] = (1, 1, 1),
+    resolution: tuple[float, float, float] = (1.0, 1.0, 1.0),
 ) -> dict[str, Any]:
     """Create the metadata for the segmentation"""
     metadata = {
@@ -62,7 +62,7 @@ def main(
     data_directory: str = "data",
     delete_existing_output_directory: bool = False,
     output_path: Optional[Path] = None,
-    resolution: tuple[int, int, int] = (1, 1, 1),
+    resolution: tuple[float, float, float] = (1.0, 1.0, 1.0),
 ) -> None:
     """Convert the given OME-Zarr file to neuroglancer segmentation format with the given block size"""
     print(f"Converting {filename} to neuroglancer compressed segmentation format")
@@ -93,7 +93,7 @@ def main(
     if len(dask_data.chunksize) != 3:
         raise ValueError(f"Expected 3 chunk dimensions, got {len(dask_data.chunksize)}")
     metadata = _create_metadata(
-        dask_data.chunksize, block_size, dask_data.shape, data_directory, resolution
+        dask_data.chunksize, block_size, dask_data.shape, data_directory, resolution  # type: ignore
     )
     write_metadata(metadata, output_directory)
     print(f"Wrote segmentation to {output_directory}")

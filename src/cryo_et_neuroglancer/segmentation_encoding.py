@@ -215,7 +215,7 @@ def create_segmentation_chunk(
     bz, by, bx = block_size
     if len(data.shape) != 3:
         raise ValueError("Data must be 3-dimensional")
-    gz, gy, gx = get_grid_size_from_block_shape(data.shape, block_size)
+    gz, gy, gx = get_grid_size_from_block_shape(data.shape, block_size)  # type: ignore
     stored_lookup_tables: dict[bytes, tuple[int, int]] = {}
     # big enough to hold the 64-bit starting block headers
     buffer = bytearray(gx * gy * gz * 8)
