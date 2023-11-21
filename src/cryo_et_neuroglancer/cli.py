@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from .write_segmentation import main as segmentation_encode
+from .write_annotations import main as annotations_encode
 
 
 def encode_segmentation(
@@ -74,6 +75,24 @@ def parse_args(args):
         help="Resolution, must be either 3 values for X Y Z separated by spaces, or a single value that will be set for X Y and Z",
     )
     subcommand.set_defaults(func=encode_segmentation)
+
+    # annotations
+    subcommand = subparsers.add_parser(
+        "encode-annotations", help="Encode annotations file"
+    )
+    subcommand.add_argument(
+        "zarr_paths",
+        help="Path towards your segmentation ZARR folders",
+        nargs="+",
+        type=Path,
+    )
+    subcommand.add_argument(
+        "-o", "--output", required=False, help="Output folder to produce", type=Path
+    )
+    subcommand.add_argument(
+        "-r", "--resolution", required=False, help="Resolution", type=float
+    )
+    subcommand.set_defaults(func=annotations_encode)
 
     return parser.parse_args(args)
 

@@ -96,32 +96,20 @@ void main() {
     print(viewer)
 
 
-def main(paths: list[tuple[Path, Path]], output_dir: Path, should_view: bool) -> None:
+def main(zarr_paths: list[Path], output: Path, resolution: float) -> None:
     """For each path set, load the data and write the combined annotations."""
     annotations = []
-    for path_set in paths:
-        input_metadata_path, input_annotations_path = path_set
+    for path_set in zarr_paths:
+        input_metadata_path = path_set
+        input_annotations_path = path_set.parent / (path_set.stem + ".ndjson")
         metadata, data = load_data(input_metadata_path, input_annotations_path)
         annotations.append({"metadata": metadata, "data": data})
 
     coordinate_space = neuroglancer.CoordinateSpace(
-        names=["x", "y", "z"], units=["", "", ""], scales=[1, 1, 1]
+        names=["x", "y", "z"],
+        units=["nm", "nm", "nm"],
+        scales=[resolution, resolution, resolution],
     )
     colors = [(255, 0, 0, 255), (0, 255, 0, 255)]
-    write_annotations(output_dir, annotations, coordinate_space, colors)
-    print("Wrote annotations to", output_dir)
-
-    if should_view:
-        view_data(coordinate_space, output_dir)
-
-
-if __name__ == "__main__":
-    base_dir = Path("/media/starfish/LargeSSD/data/cryoET/data")
-    input_metadata_path = base_dir / "sara_goetz-ribosome-1.0.json"
-    input_annotations_path = base_dir / "sara_goetz-ribosome-1.0.ndjson"
-    paths = [(input_metadata_path, input_annotations_path)]
-    input_metadata_path = base_dir / "sara_goetz-fatty_acid_synthase-1.0.json"
-    input_annotations_path = base_dir / "sara_goetz-fatty_acid_synthase-1.0.ndjson"
-    paths.append((input_metadata_path, input_annotations_path))
-    should_view = False
-    main(paths, base_dir / "annotations", should_view)
+    write_annotations(output, annotations, coordinate_space, colors)
+    print("Wrote annotations to", output)
