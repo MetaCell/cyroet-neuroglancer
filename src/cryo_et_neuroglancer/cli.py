@@ -1,7 +1,9 @@
 import argparse
 import sys
-from .write_segmentation import main as segmentation_encode
 from pathlib import Path
+from typing import Optional
+
+from .write_segmentation import main as segmentation_encode
 
 
 def encode_segmentation(
@@ -9,12 +11,17 @@ def encode_segmentation(
     skip_existing: bool,
     output: str,
     block_size: int,
-    resolution: tuple[int, int, int] | list[int],
+    resolution: Optional[tuple[float, float, float] | list[float]],
 ):
     file_path = Path(zarr_path)
     if not file_path.exists():
         print(f"The input ZARR folder {file_path!s} doesn't exist")
         return 1
+    if resolution is None:
+        print("No resolution provided, using default value of 1.348nm")
+        resolution = [
+            1.348,
+        ]
     if len(resolution) == 1:
         resolution = (resolution[0],) * 3  # type: ignore
     if len(resolution) != 3:
@@ -25,7 +32,7 @@ def encode_segmentation(
         return 3
     block_size = int(block_size)
     block_shape = (block_size, block_size, block_size)
-    output_path = Path(output) if output else output
+    output_path = Path(output) if output else None
     segmentation_encode(
         file_path,
         block_shape,

@@ -7,7 +7,8 @@ dependencies = [
     "numpy",
     "dask",
     "zarr",
-    "neuroglancer"
+    "neuroglancer",
+    "tqdm"
 ]
 
 [project.optional-dependencies]
@@ -17,9 +18,6 @@ dev = [
     "pre-commit",
     "pytest-cov",
     "mypy",
-]
-cli = [
-    "tqdm",
 ]
 
 [build-system]

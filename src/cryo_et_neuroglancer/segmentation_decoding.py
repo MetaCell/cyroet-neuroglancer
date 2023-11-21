@@ -1,9 +1,10 @@
-from math import ceil
 import struct
+from math import ceil
+
 import numpy as np
 
-from cryo_et_neuroglancer.utils import get_grid_size_from_block_shape
-from cryo_et_neuroglancer.chunk import Chunk
+from .chunk import Chunk
+from .utils import get_grid_size_from_block_shape
 
 # The units for the offsets are in 32-bit words
 OFFSET_BYTES = 4

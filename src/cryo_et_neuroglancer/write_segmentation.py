@@ -1,17 +1,18 @@
-from pathlib import Path
-from typing import Any, Iterator
-from tqdm import tqdm
-import numpy as np
-import dask.array as da
-from cryo_et_neuroglancer.chunk import Chunk
-import sys
 import shutil
+import sys
+from pathlib import Path
+from typing import Any, Iterator, Optional
 
-from cryo_et_neuroglancer.utils import iterate_chunks
-from cryo_et_neuroglancer.segmentation_encoding import (
+import dask.array as da
+import numpy as np
+from tqdm import tqdm
+
+from .chunk import Chunk
+from .io import load_omezarr_data, write_metadata
+from .segmentation_encoding import (
     create_segmentation_chunk,
 )
-from cryo_et_neuroglancer.io import load_omezarr_data, write_metadata
+from .utils import iterate_chunks
 
 
 def _create_metadata(
@@ -60,7 +61,7 @@ def main(
     block_size: tuple[int, int, int] = (64, 64, 64),
     data_directory: str = "data",
     delete_existing_output_directory: bool = False,
-    output_path=None,
+    output_path: Optional[Path] = None,
     resolution: tuple[int, int, int] = (1, 1, 1),
 ) -> None:
     """Convert the given OME-Zarr file to neuroglancer segmentation format with the given block size"""
@@ -70,10 +71,18 @@ def main(
         output_path or filename.parent / f"precomputed-{filename.stem[:-5]}"
     )
     if delete_existing_output_directory and output_directory.exists():
-        print(
-            f"The output directory {output_directory!s} exists, deleting before starting the conversion"
-        )
-        shutil.rmtree(output_directory)
+        contents = list(output_directory.iterdir())
+        content_names = sorted([c.name for c in contents])
+        if content_names != ["data", "info"]:
+            print(
+                f"The output directory {output_directory!s} exists and contains non-conversion related files, not deleting it"
+            )
+            sys.exit(1)
+        else:
+            print(
+                f"The output directory {output_directory!s} exists from a previous run, deleting before starting the conversion"
+            )
+            shutil.rmtree(output_directory)
     elif not delete_existing_output_directory and output_directory.exists():
         print(f"The output directory {output_directory!s} already exists")
         sys.exit(1)
@@ -81,21 +90,10 @@ def main(
     for c in create_segmentation(dask_data, block_size):
         c.write_to_directory(output_directory / data_directory)
 
+    if len(dask_data.chunksize) != 3:
+        raise ValueError(f"Expected 3 chunk dimensions, got {len(dask_data.chunksize)}")
     metadata = _create_metadata(
         dask_data.chunksize, block_size, dask_data.shape, data_directory, resolution
     )
     write_metadata(metadata, output_directory)
     print(f"Wrote segmentation to {output_directory}")
-
-
-if __name__ == "__main__":
-    # TODO create command line interface
-    if len(sys.argv) < 2:
-        print("Missing argument (folder)")
-        sys.exit(-1)
-    actin_file_path = Path(sys.argv[1])
-    if not actin_file_path.exists():
-        print("The data folder doesn't exist")
-        sys.exit(-2)
-    block_size = (32, 32, 32)
-    main(actin_file_path, block_size, delete_existing_output_directory=True)
