@@ -34,10 +34,13 @@ def dump_url_and_state(viewer: neuroglancer.Viewer, output_path: Optional[Path] 
         print(url, json_state)
 
 
-def loop_json_and_url(viewer: neuroglancer.Viewer):
+def loop_json_and_url(viewer: neuroglancer.Viewer, output_path: Optional[Path] = None):
     while input("Press Enter to print url and json or q to quit...") != "q":
         current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        output_path = Path(f"nglancer_url_and_json_{current_time}.txt")
+        if output_path:
+            output_path = output_path.parent / f"{output_path.stem}_{current_time}.txt"
+        else:
+            output_path = Path(f"nglancer_url_and_json_{current_time}.txt")
         print(f"Writing url and json to {output_path}")
         dump_url_and_state(viewer, output_path=output_path)
 
@@ -50,12 +53,13 @@ def viewer_to_url(**server_kwargs):
 
 
 def load_jsonstate_to_browser(path: str, **server_kwargs):
-    json_content = Path(path).read_text(encoding="utf-8")
+    json_path = Path(path)
+    json_content = json_path.read_text(encoding="utf-8")
     state = neuroglancer.viewer_state.ViewerState(json.loads(json_content))
 
     viewer = launch_nglancer(server_kwargs)
     viewer.set_state(state)
 
     open_browser(viewer)
-    loop_json_and_url(viewer)
+    loop_json_and_url(viewer, output_path=json_path)
     return 0
