@@ -80,19 +80,20 @@ def parse_args(args):
 
     # URL creation
     subcommand = subparsers.add_parser(
-        "create-url", help="Open a neuroglancer viewer and creates a URL and JSON state on-demand"
+        "create-url",
+        help="Open a neuroglancer viewer and creates a URL and JSON state on-demand",
     )
     neuroglancer.cli.add_server_arguments(subcommand)
     subcommand.set_defaults(func=viewer_to_url)
 
     # JSON loading
     subcommand = subparsers.add_parser(
-        "load-state", help="Load a neuroglancer JSON state file in a neuroglancer viewer"
+        "load-state",
+        help="Load a neuroglancer JSON state file in a neuroglancer viewer",
     )
     subcommand.add_argument("path", help="JSON state file to load")
     neuroglancer.cli.add_server_arguments(subcommand)
     subcommand.set_defaults(func=load_json_to_url)
-
 
     return parser.parse_args(args)
 
