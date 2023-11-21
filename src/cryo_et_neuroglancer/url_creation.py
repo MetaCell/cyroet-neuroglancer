@@ -49,7 +49,7 @@ def viewer_to_url(**server_kwargs):
     return 0
 
 
-def load_json_to_url(path: str, **server_kwargs):
+def load_jsonstate_to_browser(path: str, **server_kwargs):
     json_content = Path(path).read_text(encoding="utf-8")
     state = neuroglancer.viewer_state.ViewerState(json.loads(json_content))
 

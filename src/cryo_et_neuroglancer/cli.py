@@ -5,7 +5,7 @@ from typing import Optional
 
 import neuroglancer.cli
 
-from .url_creation import load_json_to_url, viewer_to_url
+from .url_creation import load_jsonstate_to_browser, viewer_to_url
 from .write_segmentation import main as segmentation_encode
 
 
@@ -93,7 +93,7 @@ def parse_args(args):
     )
     subcommand.add_argument("path", help="JSON state file to load")
     neuroglancer.cli.add_server_arguments(subcommand)
-    subcommand.set_defaults(func=load_json_to_url)
+    subcommand.set_defaults(func=load_jsonstate_to_browser)
 
     return parser.parse_args(args)
 
