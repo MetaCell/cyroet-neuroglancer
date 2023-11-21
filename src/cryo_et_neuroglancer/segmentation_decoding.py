@@ -174,8 +174,8 @@ def decode_chunk(chunk: Chunk, block_size: tuple[int, int, int]) -> np.ndarray:
     ----------
     chunk : np.ndarray
         The chunk to decode
-    encoded_bits : int
-        The number of bits used to encode the chunk
+    block_size : tuple[int, int, int]
+        The size of each block in the chunk
 
     Returns
     -------

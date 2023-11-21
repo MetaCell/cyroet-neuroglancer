@@ -5,8 +5,6 @@ from typing import Optional
 
 from .write_segmentation import main as segmentation_encode
 
-from .write_segmentation import main as segmentation_encode
-
 
 def encode_segmentation(
     zarr_path: str,
