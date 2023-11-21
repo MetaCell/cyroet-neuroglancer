@@ -3,6 +3,9 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+import neuroglancer.cli
+
+from .url_creation import viewer_to_url
 from .write_segmentation import main as segmentation_encode
 
 
@@ -74,6 +77,13 @@ def parse_args(args):
         help="Resolution, must be either 3 values for X Y Z separated by spaces, or a single value that will be set for X Y and Z",
     )
     subcommand.set_defaults(func=encode_segmentation)
+
+    # URL creation
+    subcommand = subparsers.add_parser(
+        "create-url", help="Create URL and JSON state from a neuroglancer viewer"
+    )
+    neuroglancer.cli.add_server_arguments(subcommand)
+    subcommand.set_defaults(func=viewer_to_url)
 
     return parser.parse_args(args)
 
