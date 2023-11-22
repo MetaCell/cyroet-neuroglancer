@@ -23,6 +23,7 @@ def encode_segmentation(
     skip_existing: bool,
     output: str,
     block_size: int,
+    convert_non_zero_to: int,
     resolution: Optional[tuple[float, float, float] | list[float]],
 ):
     file_path = Path(zarr_path)
@@ -51,6 +52,7 @@ def encode_segmentation(
         delete_existing_output_directory=not skip_existing,
         output_path=output_path,
         resolution=resolution,  # type: ignore
+        convert_non_zero_to=convert_non_zero_to,
     )
     return 0
 
@@ -76,14 +78,24 @@ def parse_args(args):
         "-o", "--output", required=False, help="Output folder to produce"
     )
     subcommand.add_argument(
-        "-b", "--block-size", required=False, default=64, help="Block size"
+        "-b",
+        "--block-size",
+        required=False,
+        default=64,
+        help="Block size (default: 64)",
     )
     subcommand.add_argument(
         "-r",
         "--resolution",
         nargs="+",
         type=float,
-        help="Resolution, must be either 3 values for X Y Z separated by spaces, or a single value that will be set for X Y and Z",
+        help="Resolution in nm, must be either 3 values for X Y Z separated by spaces, or a single value that will be set for X Y and Z (default: 1.348)",
+    )
+    subcommand.add_argument(
+        "--convert-non-zero-to",
+        type=int,
+        default=1,
+        help="Force all value >= 1 to an integer (default: 1)",
     )
     subcommand.set_defaults(func=encode_segmentation)
 
