@@ -1,17 +1,19 @@
 import struct
+from ctypes import LittleEndianStructure, c_uint64
+
+import numpy as np
 import pytest
+
 from cryo_et_neuroglancer.chunk import Chunk
 from cryo_et_neuroglancer.segmentation_encoding import (
-    _get_buffer_position,
     _create_block_header,
-    _create_lookup_table,
-    _pack_encoded_values,
     _create_encoded_values,
     _create_file_chunk_header,
+    _create_lookup_table,
+    _get_buffer_position,
+    _pack_encoded_values,
     create_segmentation_chunk,
 )
-from ctypes import c_uint64, LittleEndianStructure
-import numpy as np
 
 
 # Used for decoding the header
