@@ -6,6 +6,12 @@ import dask.array as da
 import numpy as np
 
 
+class DotDict(dict):
+    """dot.notation access to dictionary attributes"""
+
+    __getattr__ = dict.get
+
+
 def pad_block(block: np.ndarray, block_size: tuple[int, int, int]) -> np.ndarray:
     """Pad the block to the given block size with zeros"""
     return np.pad(

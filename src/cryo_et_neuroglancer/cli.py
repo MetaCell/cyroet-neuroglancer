@@ -3,8 +3,19 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+import neuroglancer.cli
+
+from .url_creation import load_jsonstate_to_browser, viewer_to_url
 from .write_segmentation import main as segmentation_encode
 from .write_annotations import main as annotations_encode
+
+
+def handle_json_load(path: str, **kwargs):
+    json_path = Path(path)
+    if not json_path.exists():
+        print(f"JSON file {json_path.absolute()} does not exit")
+        return -1
+    return load_jsonstate_to_browser(json_path, **kwargs)
 
 
 def encode_segmentation(
@@ -48,7 +59,7 @@ def parse_args(args):
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
 
-    # metadata check
+    # Segmentation encoding
     subcommand = subparsers.add_parser(
         "encode-segmentation", help="Encode segmentation file"
     )
@@ -76,7 +87,7 @@ def parse_args(args):
     )
     subcommand.set_defaults(func=encode_segmentation)
 
-    # annotations
+    # Annotation encoding
     subcommand = subparsers.add_parser(
         "encode-annotation", help="Encode annotations file"
     )
@@ -100,6 +111,23 @@ def parse_args(args):
         help="Color of the points as 0-255 RGBA",
     )
     subcommand.set_defaults(func=annotations_encode)
+
+    # URL creation
+    subcommand = subparsers.add_parser(
+        "create-url",
+        help="Open a neuroglancer viewer and creates a URL and JSON state on-demand",
+    )
+    neuroglancer.cli.add_server_arguments(subcommand)
+    subcommand.set_defaults(func=viewer_to_url)
+
+    # JSON loading
+    subcommand = subparsers.add_parser(
+        "load-state",
+        help="Load a neuroglancer JSON state file in a neuroglancer viewer",
+    )
+    subcommand.add_argument("path", help="JSON state file to load")
+    neuroglancer.cli.add_server_arguments(subcommand)
+    subcommand.set_defaults(func=handle_json_load)
 
     return parser.parse_args(args)
 
