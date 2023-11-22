@@ -1,4 +1,5 @@
 import pytest
+
 from cryo_et_neuroglancer.utils import (
     get_grid_size_from_block_shape,
     number_of_encoding_bits,
