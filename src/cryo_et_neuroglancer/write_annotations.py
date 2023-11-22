@@ -23,16 +23,17 @@ def load_data(
 
 def write_annotations(
     output_dir: Path,
-    annotations: list[dict[str, Any]],
+    annotations: tuple[dict[str, Any], list[dict[str, Any]]],
     coordinate_space: neuroglancer.CoordinateSpace,
-    colors: list[tuple[int, int, int, int]],
+    color: tuple[int, int, int, int],
 ) -> None:
     """
     Create a neuroglancer annotation folder with the given annotations.
 
     See https://github.com/google/neuroglancer/blob/master/src/neuroglancer/datasource/precomputed/annotations.md
     """
-    names = [a["metadata"]["annotation_object"]["name"] for a in annotations]
+    metadata, data = annotations
+    name = metadata["annotation_object"]["name"]
     writer = neuroglancer.write_annotations.AnnotationWriter(
         coordinate_space=coordinate_space,
         annotation_type="point",
@@ -42,22 +43,22 @@ def write_annotations(
             neuroglancer.AnnotationPropertySpec(
                 id="name",
                 type="uint8",
-                enum_values=[i for i in range(len(names))],
-                enum_labels=names,
+                enum_values=[
+                    0,
+                ],
+                enum_labels=[
+                    name,
+                ],
             ),
         ],
     )
 
-    for i, a in enumerate(annotations):
-        data = a["data"]
-        size = a["metadata"]["annotation_object"]["diameter"]
-        # TODO not sure what units the diameter is in
-        size = size / 1000
-        name = i
-        color = colors[i]
-        for p in data:
-            location = [p["location"][k] for k in ["x", "y", "z"]]
-            writer.add_point(location, size=size, point_color=color, name=name)
+    size = metadata["annotation_object"]["diameter"]
+    # TODO not sure what units the diameter is in
+    size = size / 100
+    for p in data:
+        location = [p["location"][k] for k in ["x", "y", "z"]]
+        writer.add_point(location, size=size, point_color=color, name=0)
 
     writer.write(output_dir)
 
@@ -96,20 +97,18 @@ void main() {
     print(viewer)
 
 
-def main(zarr_paths: list[Path], output: Path, resolution: float) -> None:
+# TODO support hex colors
+# TODO handle cases where information is missing
+def main(
+    json_path: Path, output: Path, resolution: float, color: tuple[int, int, int, int]
+) -> None:
     """For each path set, load the data and write the combined annotations."""
-    annotations = []
-    for path_set in zarr_paths:
-        input_metadata_path = path_set
-        input_annotations_path = path_set.parent / (path_set.stem + ".ndjson")
-        metadata, data = load_data(input_metadata_path, input_annotations_path)
-        annotations.append({"metadata": metadata, "data": data})
+    annotation = load_data(json_path, json_path.with_suffix(".ndjson"))
 
     coordinate_space = neuroglancer.CoordinateSpace(
         names=["x", "y", "z"],
         units=["nm", "nm", "nm"],
         scales=[resolution, resolution, resolution],
     )
-    colors = [(255, 0, 0, 255), (0, 255, 0, 255)]
-    write_annotations(output, annotations, coordinate_space, colors)
+    write_annotations(output, annotation, coordinate_space, color)
     print("Wrote annotations to", output)

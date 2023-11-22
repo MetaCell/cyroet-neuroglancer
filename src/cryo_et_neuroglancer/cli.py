@@ -78,12 +78,11 @@ def parse_args(args):
 
     # annotations
     subcommand = subparsers.add_parser(
-        "encode-annotations", help="Encode annotations file"
+        "encode-annotation", help="Encode annotations file"
     )
     subcommand.add_argument(
-        "zarr_paths",
-        help="Path towards your segmentation ZARR folders",
-        nargs="+",
+        "json_path",
+        help="Path towards the JSON file containing the annotations metadata",
         type=Path,
     )
     subcommand.add_argument(
@@ -91,6 +90,14 @@ def parse_args(args):
     )
     subcommand.add_argument(
         "-r", "--resolution", required=False, help="Resolution", type=float
+    )
+    subcommand.add_argument(
+        "-c",
+        "--color",
+        required=False,
+        nargs=4,
+        type=int,
+        help="Color of the points as 0-255 RGBA",
     )
     subcommand.set_defaults(func=annotations_encode)
 
