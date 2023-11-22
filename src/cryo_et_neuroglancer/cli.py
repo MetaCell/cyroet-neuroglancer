@@ -7,6 +7,7 @@ import neuroglancer.cli
 
 from .url_creation import load_jsonstate_to_browser, viewer_to_url
 from .write_segmentation import main as segmentation_encode
+from .write_annotations import main as annotations_encode
 
 
 def handle_json_load(path: str, **kwargs):
@@ -85,6 +86,31 @@ def parse_args(args):
         help="Resolution, must be either 3 values for X Y Z separated by spaces, or a single value that will be set for X Y and Z",
     )
     subcommand.set_defaults(func=encode_segmentation)
+
+    # Annotation encoding
+    subcommand = subparsers.add_parser(
+        "encode-annotation", help="Encode annotations file"
+    )
+    subcommand.add_argument(
+        "json_path",
+        help="Path towards the JSON file containing the annotations metadata",
+        type=Path,
+    )
+    subcommand.add_argument(
+        "-o", "--output", required=False, help="Output folder to produce", type=Path
+    )
+    subcommand.add_argument(
+        "-r", "--resolution", required=False, help="Resolution", type=float
+    )
+    subcommand.add_argument(
+        "-c",
+        "--color",
+        required=False,
+        nargs=4,
+        type=int,
+        help="Color of the points as 0-255 RGBA",
+    )
+    subcommand.set_defaults(func=annotations_encode)
 
     # URL creation
     subcommand = subparsers.add_parser(
