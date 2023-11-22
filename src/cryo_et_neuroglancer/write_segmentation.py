@@ -47,7 +47,7 @@ def _create_metadata(
 def create_segmentation(
     dask_data: da.Array,
     block_size: tuple[int, int, int],
-    convert_non_zero_to: Optional[int] = 1,
+    convert_non_zero_to: Optional[int] = 0,
 ) -> Iterator[Chunk]:
     """Yield the neuroglancer segmentation format chunks"""
     to_iterate = iterate_chunks(dask_data)
@@ -70,7 +70,7 @@ def main(
     delete_existing_output_directory: bool = False,
     output_path: Optional[Path] = None,
     resolution: tuple[float, float, float] = (1.0, 1.0, 1.0),
-    convert_non_zero_to: Optional[int] = 1,
+    convert_non_zero_to: Optional[int] = 0,
 ) -> None:
     """Convert the given OME-Zarr file to neuroglancer segmentation format with the given block size"""
     print(f"Converting {filename} to neuroglancer compressed segmentation format")

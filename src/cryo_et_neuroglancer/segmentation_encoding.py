@@ -211,7 +211,7 @@ def create_segmentation_chunk(
     data: np.ndarray,
     dimensions: tuple[tuple[int, int, int], tuple[int, int, int]],
     block_size: tuple[int, int, int] = (8, 8, 8),
-    convert_non_zero_to: Optional[int] = 1,
+    convert_non_zero_to: Optional[int] = 0,
 ) -> Chunk:
     """Convert data in a dask array to a neuroglancer segmentation chunk"""
     bz, by, bx = block_size
