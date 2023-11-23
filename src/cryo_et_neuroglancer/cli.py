@@ -5,11 +5,11 @@ from typing import Optional
 
 import neuroglancer.cli
 
-from .url_creation import load_jsonstate_to_browser, viewer_to_url, combine_json_layers
-from .write_segmentation import main as segmentation_encode
-from .write_annotations import main as annotations_encode
+from .state_generation import create_annotation, create_image
+from .url_creation import combine_json_layers, load_jsonstate_to_browser, viewer_to_url
 from .utils import get_resolution
-from .state_generation import create_image
+from .write_annotations import main as annotations_encode
+from .write_segmentation import main as segmentation_encode
 
 
 def handle_json_load(path: str, **kwargs):
@@ -176,6 +176,92 @@ def parse_args(args):
     )
     subcommand.set_defaults(func=create_image)
 
+    # Annotation JSON creation
+    subcommand = subparsers.add_parser(
+        "create-annotation",
+        help="Create a JSON file for a given annotation",
+    )
+    subcommand.add_argument(
+        "source",
+        help="Path towards the remote ZARR file",
+    )
+    subcommand.add_argument(
+        "-z",
+        "--zarr-path",
+        required=False,
+        help="Path towards the local ZARR file",
+    )
+    subcommand.add_argument(
+        "-o", "--output", required=False, help="Output json to produce", type=Path
+    )
+    subcommand.add_argument(
+        "-n",
+        "--name",
+        required=False,
+        help="Name of the layer (default: source filename)",
+    )
+    subcommand.add_argument(
+        "-u",
+        "--url",
+        required=False,
+        help="URL of the zarr server (by default, the source path is used)",
+    )
+    subcommand.add_argument(
+        "-c",
+        "--color",
+        required=False,
+        type=str,
+        help="The name of the color to use for the annotation, or a hex string followed the name of the color e.g. #FF0000 red",
+    )
+    subcommand.add_argument(
+        "-s",
+        "--point-size-multiplier",
+        required=False,
+        type=float,
+        help="The point size multiplier to use for the annotation",
+    )
+    subcommand.set_defaults(func=create_annotation)
+
+    # Segmentation JSON creation
+    subcommand = subparsers.add_parser(
+        "create-segmentation",
+        help="Create a JSON file for a given segmentation",
+    )
+    subcommand.add_argument(
+        "source",
+        help="Path towards the remote ZARR file",
+    )
+    subcommand.add_argument(
+        "-z",
+        "--zarr-path",
+        required=False,
+        help="Path towards the local ZARR file",
+    )
+    subcommand.add_argument(
+        "-o", "--output", required=False, help="Output json to produce", type=Path
+    )
+    subcommand.add_argument(
+        "-n",
+        "--name",
+        required=False,
+        help="Name of the layer (default: source filename)",
+    )
+    subcommand.add_argument(
+        "-u",
+        "--url",
+        required=False,
+        help="URL of the zarr server (by default, the source path is used)",
+    )
+    subcommand.add_argument(
+        "-c",
+        "--color",
+        required=False,
+        type=str,
+        help="The name of the color to use for the annotation, or a hex string followed the name of the color e.g. #FF0000 red",
+    )
+    subcommand.set_defaults(func=create_annotation)
+
+    # JSON combination
     subcommand = subparsers.add_parser(
         "combine-json",
         help="Combine multiple layer JSON files into a single JSON file to render",
