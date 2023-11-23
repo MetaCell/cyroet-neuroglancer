@@ -1,15 +1,14 @@
 import json
 import webbrowser
-from datetime import datetime
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Optional
+from datetime import datetime
 
 import neuroglancer
 import neuroglancer.cli
-from neuroglancer.url_state import to_json_dump, to_url
+from neuroglancer.url_state import json_to_url_safe, to_url, to_json_dump
 
-from .utils import get_resolution, make_transform
+from types import SimpleNamespace
 
 
 def launch_nglancer(server_kwargs) -> neuroglancer.Viewer:
@@ -63,25 +62,3 @@ def load_jsonstate_to_browser(path: Path, **server_kwargs):
     open_browser(viewer)
     loop_json_and_url(viewer, output_path=path)
     return 0
-
-
-def combine_json_layers(
-    json_paths: list[Path],
-    output: Path,
-    resolution: Optional[tuple[float, float, float] | list[float]] = None,
-):
-    layers = [json.load(open(p, "r")) for p in json_paths]
-    resolution = get_resolution(resolution)
-    dimensions: dict = {}
-    for dim, res in zip("xyz", resolution):
-        make_transform(dimensions, dim, res)
-
-    combined_json = {
-        "dimensions": dimensions,
-        "layers": layers,
-        "selectedLayer": {
-            "visible": True,
-            "layer": layers[0]["name"],
-        },
-    }
-    json.dump(combined_json, open(output, "w"), indent=2)
