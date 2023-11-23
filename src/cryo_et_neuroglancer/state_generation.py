@@ -3,7 +3,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 from .utils import compute_contrast_limits, get_resolution, make_transform
 
@@ -89,12 +89,11 @@ class ImageJSONGenerator(RenderingJSONGenerator):
         }
 
 
-# TODO proper json state
 @dataclass
 class SegmentationJSONGenerator(RenderingJSONGenerator):
     """Generates a JSON file for Neuroglancer to read."""
 
-    color: Union[str, tuple[str, str]]
+    color: tuple[str, str]
 
     def __post_init__(self):
         self._type = RenderingTypes.SEGMENTATION
@@ -102,22 +101,23 @@ class SegmentationJSONGenerator(RenderingJSONGenerator):
     def generate_json(self) -> dict:
         return {
             "type": self.layer_type,
-            "name": self.name,
+            "name": f"{self.name} ({self.color[1]})",
             "source": self.source,
             "tab": "rendering",
-            "selectedAlpha": 0,
-            "notSelectedAlpha": 0,
-            "hideSegmentZero": True,
-            "color": self.color,
+            "selectedAlpha": 1,
+            "hoverHighlight": False,
+            "segments": [
+                1,
+            ],
+            "segmentDefaultColor": self.color[0],
         }
 
 
-# TODO proper json state
 @dataclass
 class AnnotationJSONGenerator(RenderingJSONGenerator):
     """Generates a JSON file for Neuroglancer to read."""
 
-    color: Union[str, tuple[str, str]]
+    color: tuple[str, str]
     point_size_multiplier: float = 1.0
 
     def __post_init__(self):
@@ -126,15 +126,13 @@ class AnnotationJSONGenerator(RenderingJSONGenerator):
     def generate_json(self) -> dict:
         return {
             "type": self.layer_type,
-            "name": self.name,
+            "name": f"{self.name} ({self.color[1]})",
             "source": self.source,
             "tab": "rendering",
-            "pointSize": self.point_size_multiplier,
-            "pointRenderMode": "screenFacing",
-            "lineWidth": 1,
-            "lineWidthUnits": "pixels",
-            "pointColor": self.color,
-            "lineColor": self.color,
+            "shader": "void main() {\n  "
+            + "setColor(prop_point_color());\n  "
+            + f"SetPointSize({self.point_size_multiplier} * prop_size());\n"
+            + "}",
         }
 
 
@@ -174,6 +172,18 @@ def create_image(
     return json_generator.to_json(output)
 
 
+def process_color(color: Optional[str]) -> tuple[str, str]:
+    if color is None:
+        return ("#ff0000", "red")
+    else:
+        color_parts = color.split(" ")
+        if len(color_parts) == 1:
+            raise ValueError(
+                "Color must be a hex string followed by a name e.g. #FF0000 red"
+            )
+        return (color[0], " ".join(color[1:]))
+
+
 def create_annotation(
     source: str,
     zarr_path: Optional[str],
@@ -186,16 +196,14 @@ def create_annotation(
     source, name, url, output, zarr_path, _ = setup_creation(
         source, name, url, output, zarr_path, None
     )
-    if color is None:
-        # TODO proper color parsing
-        color = "red"
+    new_color = process_color(color)
     point_size_multiplier = (
         1.0 if point_size_multiplier is None else point_size_multiplier
     )
     json_generator = AnnotationJSONGenerator(
         source=source,
         name=name,
-        color=color,
+        color=new_color,
         point_size_multiplier=point_size_multiplier,
     )
     return json_generator.to_json(output)
@@ -212,8 +220,8 @@ def create_segmentation(
     source, name, url, output, zarr_path, _ = setup_creation(
         source, name, url, output, zarr_path, None
     )
-    if color is None:
-        # TODO proper color parsing
-        color = "red"
-    json_generator = SegmentationJSONGenerator(source=source, name=name, color=color)
+    color_tuple = process_color(color)
+    json_generator = SegmentationJSONGenerator(
+        source=source, name=name, color=color_tuple
+    )
     return json_generator.to_json(output)

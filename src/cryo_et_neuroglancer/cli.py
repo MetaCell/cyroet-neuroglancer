@@ -211,7 +211,7 @@ def parse_args(args):
         "--color",
         required=False,
         type=str,
-        help="The name of the color to use for the annotation, or a hex string followed the name of the color e.g. #FF0000 red",
+        help="A hex string followed the name of the color e.g. #FF0000 red",
     )
     subcommand.add_argument(
         "-s",
@@ -257,7 +257,7 @@ def parse_args(args):
         "--color",
         required=False,
         type=str,
-        help="The name of the color to use for the annotation, or a hex string followed the name of the color e.g. #FF0000 red",
+        help="A hex string followed the name of the color e.g. #FF0000 red",
     )
     subcommand.set_defaults(func=create_annotation)
 
