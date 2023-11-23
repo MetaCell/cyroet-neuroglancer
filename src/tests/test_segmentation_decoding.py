@@ -201,3 +201,31 @@ def test__decode_chunk():
     result = decode_chunk(chunk, block_size=shape)  # type: ignore
     assert result.shape == array.shape  # type: ignore
     assert np.all(result == array)
+
+    # Forcing all values >= 1 to 1
+    chunk: Chunk = create_segmentation_chunk(
+        array,
+        dimensions=((0, 0, 0), shape),  # type: ignore
+        block_size=shape,  # type: ignore
+        convert_non_zero_to=1,
+    )
+
+    result = decode_chunk(chunk, block_size=shape)  # type: ignore
+    assert result.shape == array.shape  # type: ignore
+    assert np.all(result[0, 0] == np.array([0, 1, 1, 0]))
+    assert np.all(result[0, 3] == np.array([1, 1, 1, 1]))
+    assert np.all(result[1, 1] == np.array([1, 1, 1, 1]))
+
+    # Forcing all values >= 1 to 5
+    chunk: Chunk = create_segmentation_chunk(
+        array,
+        dimensions=((0, 0, 0), shape),  # type: ignore
+        block_size=shape,  # type: ignore
+        convert_non_zero_to=5,
+    )
+
+    result = decode_chunk(chunk, block_size=shape)  # type: ignore
+    assert result.shape == array.shape  # type: ignore
+    assert np.all(result[0, 0] == np.array([0, 5, 5, 0]))
+    assert np.all(result[0, 3] == np.array([5, 5, 5, 5]))
+    assert np.all(result[1, 1] == np.array([5, 5, 5, 5]))

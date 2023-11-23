@@ -1,5 +1,6 @@
 import functools
 import struct
+from typing import Optional
 
 import numpy as np
 
@@ -210,13 +211,18 @@ def create_segmentation_chunk(
     data: np.ndarray,
     dimensions: tuple[tuple[int, int, int], tuple[int, int, int]],
     block_size: tuple[int, int, int] = (8, 8, 8),
+    convert_non_zero_to: Optional[int] = 0,
 ) -> Chunk:
     """Convert data in a dask array to a neuroglancer segmentation chunk"""
     bz, by, bx = block_size
     if len(data.shape) != 3:
         raise ValueError("Data must be 3-dimensional")
+    if convert_non_zero_to:
+        data[data > 0] = convert_non_zero_to
+        data[data < 0] = 0
     gz, gy, gx = get_grid_size_from_block_shape(data.shape, block_size)  # type: ignore
     stored_lookup_tables: dict[bytes, tuple[int, int]] = {}
+
     # big enough to hold the 64-bit starting block headers
     buffer = bytearray(gx * gy * gz * 8)
 

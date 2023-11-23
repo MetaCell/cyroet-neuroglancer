@@ -45,7 +45,9 @@ def _create_metadata(
 
 
 def create_segmentation(
-    dask_data: da.Array, block_size: tuple[int, int, int]
+    dask_data: da.Array,
+    block_size: tuple[int, int, int],
+    convert_non_zero_to: Optional[int] = 0,
 ) -> Iterator[Chunk]:
     """Yield the neuroglancer segmentation format chunks"""
     to_iterate = iterate_chunks(dask_data)
@@ -53,7 +55,12 @@ def create_segmentation(
     for chunk, dimensions in tqdm(
         to_iterate, desc="Processing chunks", total=num_iters
     ):
-        yield create_segmentation_chunk(chunk.compute(), dimensions, block_size)
+        yield create_segmentation_chunk(
+            chunk.compute(),
+            dimensions,
+            block_size,
+            convert_non_zero_to=convert_non_zero_to,
+        )
 
 
 def main(
@@ -63,6 +70,7 @@ def main(
     delete_existing_output_directory: bool = False,
     output_path: Optional[Path] = None,
     resolution: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    convert_non_zero_to: Optional[int] = 0,
 ) -> None:
     """Convert the given OME-Zarr file to neuroglancer segmentation format with the given block size"""
     print(f"Converting {filename} to neuroglancer compressed segmentation format")
@@ -73,7 +81,7 @@ def main(
     if delete_existing_output_directory and output_directory.exists():
         contents = list(output_directory.iterdir())
         content_names = sorted([c.name for c in contents])
-        if content_names != ["data", "info"]:
+        if content_names and content_names != ["data", "info"]:
             print(
                 f"The output directory {output_directory!s} exists and contains non-conversion related files, not deleting it"
             )
@@ -87,7 +95,9 @@ def main(
         print(f"The output directory {output_directory!s} already exists")
         sys.exit(1)
     output_directory.mkdir(parents=True, exist_ok=True)
-    for c in create_segmentation(dask_data, block_size):
+    for c in create_segmentation(
+        dask_data, block_size, convert_non_zero_to=convert_non_zero_to
+    ):
         c.write_to_directory(output_directory / data_directory)
 
     if len(dask_data.chunksize) != 3:

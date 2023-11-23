@@ -202,8 +202,8 @@ def test__create_segmentation_chunk():
         ],
     ]
     chunk: Chunk = create_segmentation_chunk(
-        np.array(array), dimensions=((0, 0, 0), (8, 8, 8)), block_size=(8, 8, 8)
+        np.array(array), dimensions=((0, 0, 0), (8, 8, 4)), block_size=(8, 8, 4)
     )
 
-    assert chunk.dimensions == ((0, 0, 0), (8, 8, 8))
+    assert chunk.dimensions == ((0, 0, 0), (8, 8, 4))
     # TODO expand me!
