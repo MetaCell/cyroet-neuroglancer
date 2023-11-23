@@ -1,15 +1,56 @@
+from pathlib import Path
 from functools import lru_cache
 from math import ceil
-from typing import Iterator
+from typing import Iterator, Optional
 
 import dask.array as da
 import numpy as np
+
+from .io import load_omezarr_data
 
 
 class DotDict(dict):
     """dot.notation access to dictionary attributes"""
 
     __getattr__ = dict.get
+
+
+def compute_contrast_limits(zarr_path: Path) -> tuple[float, float]:
+    """Compute the contrast limits for the given ZARR file"""
+    data = load_omezarr_data(zarr_path)
+    sample_data = get_random_samples(data, 10000)
+    return np.percentile(sample_data, (1.0, 99.0))
+
+
+def get_random_samples(dask_array: da.Array, size: int) -> np.ndarray:
+    shape = dask_array.shape
+
+    random_indices = [np.random.choice(dim, size=size) for dim in shape]
+
+    random_samples = dask_array.compute()[
+        random_indices[0], random_indices[1], random_indices[2]
+    ]
+
+    return random_samples
+
+
+def get_resolution(
+    resolution: Optional[tuple[float, float, float] | list[float] | float]
+) -> tuple[float, float, float]:
+    if resolution is None:
+        print("No resolution provided, using default value of 1.348nm")
+        resolution = [
+            1.348,
+        ]
+    if not isinstance(resolution, (tuple, list)):
+        resolution = [resolution]
+    if len(resolution) == 1:
+        resolution = (resolution[0],) * 3  # type: ignore
+    if len(resolution) != 3:
+        raise ValueError("Resolution tuple must have 3 values")
+    if any(x <= 0 for x in resolution):
+        raise ValueError("Resolution component has to be > 0")
+    return resolution  # type: ignore
 
 
 def pad_block(block: np.ndarray, block_size: tuple[int, int, int]) -> np.ndarray:
@@ -45,6 +86,10 @@ def iterate_chunks(
                 end = (start[0] + z, start[1] + y, start[2] + x)
                 dimensions = (start, end)
                 yield chunk, dimensions
+
+
+def make_transform(input_dict: dict, dim: str, resolution: float):
+    input_dict[dim] = [resolution * 10e-10, "m"]
 
 
 def get_grid_size_from_block_shape(

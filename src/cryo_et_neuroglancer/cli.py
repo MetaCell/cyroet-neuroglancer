@@ -5,9 +5,11 @@ from typing import Optional
 
 import neuroglancer.cli
 
-from .url_creation import load_jsonstate_to_browser, viewer_to_url
+from .url_creation import load_jsonstate_to_browser, viewer_to_url, combine_json_layers
 from .write_segmentation import main as segmentation_encode
 from .write_annotations import main as annotations_encode
+from .utils import get_resolution
+from .state_generation import create_image
 
 
 def handle_json_load(path: str, **kwargs):
@@ -30,19 +32,8 @@ def encode_segmentation(
     if not file_path.exists():
         print(f"The input ZARR folder {file_path!s} doesn't exist")
         return 1
-    if resolution is None:
-        print("No resolution provided, using default value of 1.348nm")
-        resolution = [
-            1.348,
-        ]
-    if len(resolution) == 1:
-        resolution = (resolution[0],) * 3  # type: ignore
-    if len(resolution) != 3:
-        print("Resolution tuple must have 3 values")
-        return 2
-    if any(x <= 0 for x in resolution):
-        print("Resolution component has to be > 0")
-        return 3
+    resolution = get_resolution(resolution)
+
     block_size = int(block_size)
     block_shape = (block_size, block_size, block_size)
     output_path = Path(output) if output else None
@@ -143,6 +134,66 @@ def parse_args(args):
     subcommand.add_argument("path", help="JSON state file to load")
     neuroglancer.cli.add_server_arguments(subcommand)
     subcommand.set_defaults(func=handle_json_load)
+
+    # Image JSON creation
+    subcommand = subparsers.add_parser(
+        "create-image",
+        help="Create a JSON file for a given image",
+    )
+    # TODO should this maybe support remote ZARR files?
+    subcommand.add_argument(
+        "source",
+        help="Path towards the remote ZARR file",
+    )
+    subcommand.add_argument(
+        "-z",
+        "--zarr-path",
+        required=False,
+        help="Path towards the local ZARR file",
+    )
+    subcommand.add_argument(
+        "-o", "--output", required=False, help="Output json to produce", type=Path
+    )
+    subcommand.add_argument(
+        "-n",
+        "--name",
+        required=False,
+        help="Name of the layer (default: source filename)",
+    )
+    subcommand.add_argument(
+        "-u",
+        "--url",
+        required=False,
+        help="URL of the zarr server (by default, the source path is used)",
+    )
+    subcommand.add_argument(
+        "-r",
+        "--resolution",
+        nargs="+",
+        type=float,
+        help="Resolution in nm, must be either 3 values for X Y Z separated by spaces, or a single value that will be set for X Y and Z (default: 1.348)",
+        required=False,
+    )
+    subcommand.set_defaults(func=create_image)
+
+    subcommand = subparsers.add_parser(
+        "combine-json",
+        help="Combine multiple layer JSON files into a single JSON file to render",
+    )
+    subcommand.add_argument(
+        "json_paths",
+        nargs="+",
+        help="JSON files to combine",
+        type=Path,
+    )
+    subcommand.add_argument(
+        "-o",
+        "--output",
+        required=True,
+        help="Output json to produce",
+        type=Path,
+    )
+    subcommand.set_defaults(func=combine_json_layers)
 
     return parser.parse_args(args)
 
