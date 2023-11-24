@@ -75,7 +75,10 @@ def parse_args(args):
         help="Skips already existing target folders",
     )
     subcommand.add_argument(
-        "-o", "--output", required=False, help="Output folder to produce"
+        "-o",
+        "--output",
+        required=False,
+        help="Output folder to produce in precomputed format. If not provided, the output will be precomputed_<zarr_path> with the last 5 characters removed (_zarr)",
     )
     subcommand.add_argument(
         "-b",
@@ -98,7 +101,7 @@ def parse_args(args):
         nargs="?",
         default=0,
         const=1,
-        help="Force all value >= 1 to an integer. If the option is used without arguments, 1 is considered.",
+        help="Force all values >= 1 to an integer. If the option is used without arguments, 1 is considered.",
     )
     subcommand.set_defaults(func=encode_segmentation)
 
