@@ -65,7 +65,7 @@ class ImageJSONGenerator(RenderingJSONGenerator):
 
     def generate_json(self) -> dict:
         transform: dict = {}
-        for dim, resolution in zip("xyz", self.resolution):
+        for dim, resolution in zip("zyx", self.resolution[::-1]):
             make_transform(transform, dim, resolution)
 
         original: dict = {}
@@ -73,7 +73,7 @@ class ImageJSONGenerator(RenderingJSONGenerator):
             make_transform(original, dim, resolution)
 
         source = {
-            "url": self.source,
+            "url": f"zarr://{self.source}",
             "transform": {
                 "outputDimensions": transform,
                 "inputDimensions": original,
@@ -102,7 +102,7 @@ class SegmentationJSONGenerator(RenderingJSONGenerator):
         return {
             "type": self.layer_type,
             "name": f"{self.name} ({self.color[1]})",
-            "source": self.source,
+            "source": f"precomputed://{self.source}",
             "tab": "rendering",
             "selectedAlpha": 1,
             "hoverHighlight": False,
@@ -127,7 +127,7 @@ class AnnotationJSONGenerator(RenderingJSONGenerator):
         return {
             "type": self.layer_type,
             "name": f"{self.name} ({self.color[1]})",
-            "source": self.source,
+            "source": f"precomputed://{self.source}",
             "tab": "rendering",
             "shader": "void main() {\n  "
             + "setColor(prop_point_color());\n  "
@@ -150,26 +150,8 @@ def setup_creation(
     output = output if output is not None else Path(f"{name}.json")
     resolution = get_resolution(resolution)
     sep = "/" if url else ""
-    source = f"zarr://{url}{sep}{source}"
+    source = f"{url}{sep}{source}"
     return source, name, url, output, zarr_path, resolution
-
-
-def create_image(
-    source: str,
-    zarr_path: Optional[str],
-    name: Optional[str],
-    resolution: Optional[float | tuple[float, float, float]],
-    url: Optional[str],
-    output: Optional[Path],
-) -> dict:
-    source, name, url, output, zarr_path, resolution = setup_creation(
-        source, name, url, output, zarr_path, resolution
-    )
-    contrast_limits = compute_contrast_limits(Path(zarr_path))
-    json_generator = ImageJSONGenerator(
-        source=source, name=name, resolution=resolution, contrast_limits=contrast_limits
-    )
-    return json_generator.to_json(output)
 
 
 def process_color(color: Optional[str]) -> tuple[str, str]:
@@ -181,7 +163,26 @@ def process_color(color: Optional[str]) -> tuple[str, str]:
             raise ValueError(
                 "Color must be a hex string followed by a name e.g. #FF0000 red"
             )
-        return (color[0], " ".join(color[1:]))
+        return (color_parts[0], " ".join(color_parts[1:]))
+
+
+def create_image(
+    source: str,
+    zarr_path: Optional[str],
+    name: Optional[str],
+    resolution: Optional[float | tuple[float, float, float]],
+    url: Optional[str],
+    output: Optional[Path],
+) -> int:
+    source, name, url, output, zarr_path, resolution = setup_creation(
+        source, name, url, output, zarr_path, resolution
+    )
+    contrast_limits = compute_contrast_limits(Path(zarr_path))
+    json_generator = ImageJSONGenerator(
+        source=source, name=name, resolution=resolution, contrast_limits=contrast_limits
+    )
+    json_generator.to_json(output)
+    return 0
 
 
 def create_annotation(
@@ -192,7 +193,7 @@ def create_annotation(
     output: Optional[Path],
     color: Optional[str],
     point_size_multiplier: Optional[float],
-) -> dict:
+) -> int:
     source, name, url, output, zarr_path, _ = setup_creation(
         source, name, url, output, zarr_path, None
     )
@@ -206,7 +207,8 @@ def create_annotation(
         color=new_color,
         point_size_multiplier=point_size_multiplier,
     )
-    return json_generator.to_json(output)
+    json_generator.to_json(output)
+    return 0
 
 
 def create_segmentation(
@@ -216,7 +218,7 @@ def create_segmentation(
     url: Optional[str],
     output: Optional[Path],
     color: Optional[str],
-) -> dict:
+) -> int:
     source, name, url, output, zarr_path, _ = setup_creation(
         source, name, url, output, zarr_path, None
     )
@@ -224,4 +226,5 @@ def create_segmentation(
     json_generator = SegmentationJSONGenerator(
         source=source, name=name, color=color_tuple
     )
-    return json_generator.to_json(output)
+    json_generator.to_json(output)
+    return 0

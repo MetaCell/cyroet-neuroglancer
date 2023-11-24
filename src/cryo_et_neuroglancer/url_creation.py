@@ -73,7 +73,7 @@ def combine_json_layers(
     layers = [json.load(open(p, "r")) for p in json_paths]
     resolution = get_resolution(resolution)
     dimensions: dict = {}
-    for dim, res in zip("xyz", resolution):
+    for dim, res in zip("zyx", resolution[::-1]):
         make_transform(dimensions, dim, res)
 
     combined_json = {
@@ -83,5 +83,13 @@ def combine_json_layers(
             "visible": True,
             "layer": layers[0]["name"],
         },
+        "position": [383.5, 463.0849304199219, 430.5],
+        "crossSectionScale": 1.7221188003905089,
+        "projectionOrientation": [
+            0.014965029433369637,
+            -0.6551691889762878,
+            0.0033421318512409925,
+            -0.7553265690803528,
+        ],
     }
     json.dump(combined_json, open(output, "w"), indent=2)

@@ -5,7 +5,7 @@ from typing import Optional
 
 import neuroglancer.cli
 
-from .state_generation import create_annotation, create_image
+from .state_generation import create_annotation, create_image, create_segmentation
 from .url_creation import combine_json_layers, load_jsonstate_to_browser, viewer_to_url
 from .utils import get_resolution
 from .write_annotations import main as annotations_encode
@@ -259,7 +259,7 @@ def parse_args(args):
         type=str,
         help="A hex string followed the name of the color e.g. #FF0000 red",
     )
-    subcommand.set_defaults(func=create_annotation)
+    subcommand.set_defaults(func=create_segmentation)
 
     # JSON combination
     subcommand = subparsers.add_parser(
@@ -278,6 +278,14 @@ def parse_args(args):
         required=True,
         help="Output json to produce",
         type=Path,
+    )
+    subcommand.add_argument(
+        "-r",
+        "--resolution",
+        nargs="+",
+        type=float,
+        help="Resolution in nm, must be either 3 values for X Y Z separated by spaces, or a single value that will be set for X Y and Z (default: 1.348)",
+        required=False,
     )
     subcommand.set_defaults(func=combine_json_layers)
 

@@ -38,7 +38,6 @@ def get_resolution(
     resolution: Optional[tuple[float, float, float] | list[float] | float]
 ) -> tuple[float, float, float]:
     if resolution is None:
-        print("No resolution provided, using default value of 1.348nm")
         resolution = [
             1.348,
         ]
