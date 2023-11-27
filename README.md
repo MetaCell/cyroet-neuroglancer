@@ -16,6 +16,20 @@ pip install cyro-et-neuroglancer
 cryoet-converter --help
 ```
 
+See the examples folder for bash scripts that create all the necessary files for a neuroglancer viewer from a cryo-ET dataset.
+
+### Annotations
+
+./examples/convert_and_view_image_and_annotations.sh
+
+![Annotations](examples/annotation.png)
+
+### Segmentation
+
+./examples/convert_and_view_image_and_segmentation.sh
+
+![Segmentation](examples/segmentation.png)
+
 ## Development
 
 ### Developer installation
