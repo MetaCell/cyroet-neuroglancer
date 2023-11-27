@@ -143,7 +143,6 @@ def parse_args(args):
         "create-image",
         help="Create a JSON file for a given image",
     )
-    # TODO should this maybe support remote ZARR files?
     subcommand.add_argument(
         "source",
         help="Path towards the remote ZARR file",

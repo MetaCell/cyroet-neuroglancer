@@ -30,6 +30,14 @@ See the examples folder for bash scripts that create all the necessary files for
 
 ![Segmentation](examples/segmentation.png)
 
+### Components
+
+There are three parts to this package:
+
+1. The first part of the package is designed to convert a cryo-ET dataset into a format that can be viewed in neuroglancer. The commands `encode-segmentation` and `encode-annotation` are used here.
+2. The second part of the package is designed to view the converted dataset in neuroglancer. The commands `create_image`, `create_segmentation`, and `create_annotation` are used here. Each of these produce a JSON file that represents a neuroglancer layer. The layers can then be combined into a single neuroglancer viewer state via the `combine-json` command.
+3. The final part of this package is designed to help quickly grab the JSON state or URL of a locally running neuroglancer instance, or setup a local viewer with a state. The commands `load-state` and `create-url` are used here.
+
 ## Development
 
 ### Developer installation
