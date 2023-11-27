@@ -20,13 +20,13 @@ See the examples folder for bash scripts that create all the necessary files for
 
 ### Annotations
 
-./examples/convert_and_view_image_and_annotations.sh
+`./examples/convert_and_view_image_and_annotations.sh`
 
 ![Annotations](examples/annotation.png)
 
 ### Segmentation
 
-./examples/convert_and_view_image_and_segmentation.sh
+`./examples/convert_and_view_image_and_segmentation.sh`
 
 ![Segmentation](examples/segmentation.png)
 
