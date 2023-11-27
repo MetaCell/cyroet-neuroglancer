@@ -15,6 +15,9 @@ class RenderingTypes(Enum):
     IMAGE = auto()
     ANNOTATION = auto()
 
+    def __str__(self):
+        return self.name.lower()
+
 
 @dataclass
 class RenderingJSONGenerator:
@@ -26,13 +29,9 @@ class RenderingJSONGenerator:
     @property
     def layer_type(self) -> str:
         """Returns the layer type for Neuroglancer."""
-        if self._type == RenderingTypes.SEGMENTATION:  # type: ignore
-            return "segmentation"
-        elif self._type == RenderingTypes.IMAGE:  # type: ignore
-            return "image"
-        elif self._type == RenderingTypes.ANNOTATION:  # type: ignore
-            return "annotation"
-        else:
+        try:
+            return str(self._type)  # type: ignore
+        except AttributeError:
             raise ValueError(f"Unknown rendering type {self._type}")  # type: ignore
 
     def to_json(self, output: Path) -> dict:
