@@ -22,7 +22,7 @@ def compute_contrast_limits(zarr_path: Path) -> tuple[tuple[float, float], int]:
     z_start = max(middle_z_slice - 1, 0)
     z_end = min(middle_z_slice + 1, data.shape[0])
     sample_data = get_random_samples(data[z_start:z_end], 1000)
-    return np.percentile(sample_data, (10.0, 90.0)), middle_z_slice
+    return np.percentile(sample_data, (5.0, 95.0)), middle_z_slice
 
 
 def get_random_samples(dask_array: da.Array, size: int) -> np.ndarray:
