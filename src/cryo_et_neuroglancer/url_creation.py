@@ -71,6 +71,12 @@ def combine_json_layers(
     resolution: Optional[tuple[float, float, float] | list[float]] = None,
 ):
     layers = [json.load(open(p, "r")) for p in json_paths]
+    image_layers = [layer for layer in layers if layer["type"] == "image"]
+    if len(image_layers) != 0:
+        first_image = image_layers[0]
+        middle_z = first_image["_non_neuroglancer_middlez"]
+    else:
+        middle_z = 480
     resolution = get_resolution(resolution)
     dimensions: dict = {}
     for dim, res in zip("zyx", resolution[::-1]):
@@ -83,13 +89,13 @@ def combine_json_layers(
             "visible": True,
             "layer": layers[0]["name"],
         },
-        "position": [480.5, 463.0849304199219, 430.5],
-        "crossSectionScale": 1.7221188003905089,
+        "position": [float(middle_z) + 0.5, 463.5, 430.5],
+        "crossSectionScale": 1.8,
         "projectionOrientation": [
             0.0,
-            0.6551691889762878,
+            0.655,
             0.0,
-            -0.7553265690803528,
+            -0.756,
         ],
     }
     json.dump(combined_json, open(output, "w"), indent=2)
