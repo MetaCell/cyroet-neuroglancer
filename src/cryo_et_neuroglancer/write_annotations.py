@@ -9,6 +9,8 @@ import neuroglancer.cli
 import neuroglancer.static_file_server
 import neuroglancer.write_annotations
 
+from cryo_et_neuroglancer.sharding import ShardingSpecification, jsonify
+
 
 def load_data(
     metadata_path: Path, annotations_path: Path
@@ -26,7 +28,7 @@ def write_annotations(
     annotations: tuple[dict[str, Any], list[dict[str, Any]]],
     coordinate_space: neuroglancer.CoordinateSpace,
     color: tuple[int, int, int, int],
-) -> None:
+) -> Path:
     """
     Create a neuroglancer annotation folder with the given annotations.
 
@@ -56,11 +58,39 @@ def write_annotations(
     size = metadata["annotation_object"]["diameter"]
     # TODO not sure what units the diameter is in
     size = size / 100
-    for p in data:
-        location = [p["location"][k] for k in ["x", "y", "z"]]
+    for i, p in enumerate(data):
+        location = [p["location"][k] for k in ("x", "y", "z")]
         writer.add_point(location, size=size, point_color=color, name=0)
 
     writer.write(output_dir)
+
+    return output_dir
+
+
+def _shard_by_id_index(directory: Path, shard_bits: int, minishard_bits: int):
+    sharding_specification = ShardingSpecification(
+        type="neuroglancer_uint64_sharded_v1",
+        preshift_bits=0,
+        hash="identity",
+        minishard_bits=minishard_bits,
+        shard_bits=shard_bits,
+        minishard_index_encoding="gzip",
+        data_encoding="gzip",
+    )
+    labels = {}
+    for file in (directory / "by_id").iterdir():
+        if ".shard" not in file.name:
+            labels[int(file.name)] = file.read_bytes()
+            file.unlink()
+
+    shard_files = sharding_specification.synthesize_shards(labels, progress=True)
+    for shard_filename, shard_content in shard_files.items():
+        (directory / "by_id" / shard_filename).write_bytes(shard_content)
+
+    info_path = directory / "info"
+    info = json.load(info_path.open("r", encoding="utf-8"))
+    info["by_id"]["sharding"] = sharding_specification.to_dict()
+    info_path.write_text(jsonify(info, indent=2))
 
 
 def view_data(coordinate_space: neuroglancer.CoordinateSpace, output_dir: Path) -> None:
@@ -100,9 +130,16 @@ void main() {
 # TODO support hex colors
 # TODO handle cases where information is missing
 def main(
-    json_path: Path, output: Path, resolution: float, color: tuple[int, int, int, int]
+    json_path: Path,
+    output: Path,
+    resolution: float,
+    color: tuple[int, int, int, int],
+    shard_by_id: tuple[int, int] = (0, 10),
 ) -> None:
     """For each path set, load the data and write the combined annotations."""
+    if len(shard_by_id) < 2:
+        shard_by_id = (0, 10)
+
     annotation = load_data(json_path, json_path.with_suffix(".ndjson"))
 
     coordinate_space = neuroglancer.CoordinateSpace(
@@ -112,3 +149,7 @@ def main(
     )
     write_annotations(output, annotation, coordinate_space, color)
     print("Wrote annotations to", output)
+
+    if shard_by_id and len(shard_by_id) == 2:
+        shard_bits, minishard_bits = shard_by_id
+        _shard_by_id_index(output, shard_bits, minishard_bits)
