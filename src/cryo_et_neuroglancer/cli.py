@@ -10,6 +10,9 @@ from .url_creation import combine_json_layers, load_jsonstate_to_browser, viewer
 from .utils import get_resolution
 from .write_annotations import main as annotations_encode
 from .write_segmentation import main as segmentation_encode
+from .write_annotations import main as annotations_encode
+from .utils import get_resolution
+from .state_generation import create_image
 
 
 def handle_json_load(path: str, **kwargs):
@@ -118,6 +121,13 @@ def parse_args(args):
         nargs=4,
         type=int,
         help="Color of the points as 0-255 RGBA",
+    )
+    subcommand.add_argument(
+        "--shard-by-id",
+        required=False,
+        nargs="*",
+        type=int,
+        help="Produces a shard indexes for by_id indexes considering the two int entered as arguments as value for the shard bits and minishard bits. The default value for the shard bits is 0 and the default value for the minishard bits is 10",
     )
     subcommand.set_defaults(func=annotations_encode)
 
