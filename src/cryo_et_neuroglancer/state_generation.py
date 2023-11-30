@@ -52,7 +52,7 @@ class ImageJSONGenerator(RenderingJSONGenerator):
 
     resolution: tuple[float, float, float]
     contrast_limits: tuple[float, float] = (-64, 64)
-    middle_z: int = 480
+    middle_slices: tuple[int, int, int] = (0, 0, 0)
 
     def __post_init__(self):
         self._type = RenderingTypes.IMAGE
@@ -86,7 +86,7 @@ class ImageJSONGenerator(RenderingJSONGenerator):
             "source": source,
             "shader": self.create_shader(),
             "tab": "rendering",
-            "_non_neuroglancer_middlez": self.middle_z,
+            "_non_neuroglancer_middle": self.middle_slices,
         }
 
 
@@ -178,13 +178,13 @@ def create_image(
     source, name, url, output, zarr_path, resolution = setup_creation(
         source, name, url, output, zarr_path, resolution
     )
-    contrast_limits, middle_z = compute_contrast_limits(Path(zarr_path))
+    contrast_limits, middles = compute_contrast_limits(Path(zarr_path))
     json_generator = ImageJSONGenerator(
         source=source,
         name=name,
         resolution=resolution,
         contrast_limits=contrast_limits,
-        middle_z=middle_z,
+        middle_slices=middles,
     )
     json_generator.to_json(output)
     return 0

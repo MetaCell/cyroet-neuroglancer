@@ -15,15 +15,19 @@ class DotDict(dict):
     __getattr__ = dict.get
 
 
-def compute_contrast_limits(zarr_path: Path) -> tuple[tuple[float, float], int]:
+def compute_contrast_limits(
+    zarr_path: Path,
+) -> tuple[tuple[float, float], tuple[int, int, int]]:
     """Compute the contrast limits for the given ZARR file"""
     data = load_omezarr_data(zarr_path)
     middle_z_slice = data.shape[0] // 2
+    middle_y_slice = data.shape[1] // 2
+    middle_x_slice = data.shape[2] // 2
     z_start = max(middle_z_slice - 2, 0)
     z_end = min(middle_z_slice + 2, data.shape[0])
     sample_data = get_random_samples(data[z_start:z_end], 1500)
     limits = np.percentile(sample_data, (5.0, 95.0))
-    return np.round(limits, 2), middle_z_slice
+    return np.round(limits, 2), (middle_z_slice, middle_y_slice, middle_x_slice)
 
 
 def get_random_samples(dask_array: da.Array, size: int) -> np.ndarray:

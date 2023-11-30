@@ -74,9 +74,10 @@ def combine_json_layers(
     image_layers = [layer for layer in layers if layer["type"] == "image"]
     if len(image_layers) != 0:
         first_image = image_layers[0]
-        middle_z = first_image["_non_neuroglancer_middlez"]
+        middle = first_image["_non_neuroglancer_middle"]
+        middle = [float(m) + 0.5 for m in middle]
     else:
-        middle_z = 480
+        middle = None
     resolution = get_resolution(resolution)
     dimensions: dict = {}
     for dim, res in zip("zyx", resolution[::-1]):
@@ -89,7 +90,6 @@ def combine_json_layers(
             "visible": True,
             "layer": layers[0]["name"],
         },
-        "position": [float(middle_z) + 0.5, 463.5, 430.5],
         "crossSectionScale": 1.8,
         "projectionOrientation": [
             0.0,
@@ -98,4 +98,7 @@ def combine_json_layers(
             -0.756,
         ],
     }
+    if middle is not None:
+        print("Setting middle", middle)
+        combined_json["position"] = middle
     json.dump(combined_json, open(output, "w"), indent=2)
