@@ -70,7 +70,8 @@ def write_annotations(
     )
 
     # Convert angstrom to nanometer
-    size = metadata["annotation_object"].get("diameter", 350) / 10
+    # Using 28nm as default size
+    size = metadata["annotation_object"].get("diameter", 280) / 10
     for index, p in enumerate(data):
         location = [p["location"][k] for k in ("x", "y", "z")]
         if is_oriented:
