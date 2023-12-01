@@ -69,9 +69,8 @@ def write_annotations(
         ],
     )
 
-    size = metadata["annotation_object"].get("diameter", 100)
-    # TODO not sure what units the diameter is in
-    size = size / 100
+    # Convert angstrom to nanometer
+    size = metadata["annotation_object"].get("diameter", 350) / 10
     for index, p in enumerate(data):
         location = [p["location"][k] for k in ("x", "y", "z")]
         rot_mat = {
