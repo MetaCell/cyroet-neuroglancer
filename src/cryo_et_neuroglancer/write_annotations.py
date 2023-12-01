@@ -69,7 +69,7 @@ def write_annotations(
         ],
     )
 
-    size = metadata["annotation_object"].get("diameter", 1)
+    size = metadata["annotation_object"].get("diameter", 100)
     # TODO not sure what units the diameter is in
     size = size / 100
     for index, p in enumerate(data):
@@ -79,7 +79,7 @@ def write_annotations(
             for i, line in enumerate(p["xyz_rotation_matrix"])
             for j, col in enumerate(line)
         }
-        writer.add_point(location, size=size, point_color=color, name=name, **rot_mat)
+        writer.add_point(location, size=size, point_color=color, name=0, **rot_mat)
 
     writer.write(output_dir)
 
