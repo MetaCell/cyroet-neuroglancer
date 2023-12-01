@@ -1,13 +1,9 @@
-import argparse
 import json
 from pathlib import Path
 from typing import Any
 
 import ndjson
-import neuroglancer
-import neuroglancer.cli
-import neuroglancer.static_file_server
-from neuroglancer import AnnotationLayer, AnnotationPropertySpec, CoordinateSpace
+from neuroglancer import AnnotationPropertySpec, CoordinateSpace
 from neuroglancer.server import sys
 from neuroglancer.write_annotations import AnnotationWriter
 
@@ -52,7 +48,7 @@ def write_annotations(
         coordinate_space=coordinate_space,
         annotation_type="point",
         properties=[
-            AnnotationPropertySpec(id="size", type="float32"),
+            AnnotationPropertySpec(id="diameter", type="float32"),
             AnnotationPropertySpec(id="point_color", type="rgba"),
             AnnotationPropertySpec(
                 id="name",
@@ -71,7 +67,7 @@ def write_annotations(
 
     # Convert angstrom to nanometer
     # Using 28nm as default size
-    size = metadata["annotation_object"].get("diameter", 280) / 10
+    diameter = metadata["annotation_object"].get("diameter", 280) / 10
     for index, p in enumerate(data):
         location = [p["location"][k] for k in ("x", "y", "z")]
         if is_oriented:
@@ -82,7 +78,9 @@ def write_annotations(
             }
         else:
             rot_mat = {}
-        writer.add_point(location, size=size, point_color=color, name=0, **rot_mat)
+        writer.add_point(
+            location, diameter=diameter, point_color=color, name=0, **rot_mat
+        )
 
     writer.write(output_dir)
 
@@ -113,40 +111,6 @@ def _shard_by_id_index(directory: Path, shard_bits: int, minishard_bits: int):
     info = json.load(info_path.open("r", encoding="utf-8"))
     info["by_id"]["sharding"] = sharding_specification.to_dict()
     info_path.write_text(jsonify(info, indent=2))
-
-
-def view_data(coordinate_space: CoordinateSpace, output_dir: Path) -> None:
-    ap = argparse.ArgumentParser()
-    neuroglancer.cli.add_server_arguments(ap)
-    args = ap.parse_args()
-    neuroglancer.cli.handle_server_arguments(args)
-    viewer = neuroglancer.Viewer()
-
-    # Start a static file server, serve the contents of the output directory.
-    server = neuroglancer.static_file_server.StaticFileServer(
-        static_dir=output_dir,
-        bind_address=args.bind_address or "127.0.0.1",
-        daemon=True,
-    )
-
-    with viewer.txn() as s:
-        s.layers["annotations"] = AnnotationLayer(
-            source=f"precomputed://{server.url}",
-            tab="rendering",
-            shader="""
-void main() {
-    setColor(prop_point_color());
-    setPointMarkerSize(prop_size());
-}
-    """,
-        )
-        s.selected_layer.layer = "annotations"
-        s.selected_layer.visible = True
-        s.show_slices = False
-
-        s.dimensions = coordinate_space
-
-    print(viewer)
 
 
 # TODO support hex colors
