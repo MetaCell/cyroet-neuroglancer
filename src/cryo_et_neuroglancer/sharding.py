@@ -31,13 +31,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from collections import namedtuple, defaultdict
 import copy
-import json
-from cloudfiles.interfaces import BytesIO
 import gzip
+import json
+from collections import defaultdict, namedtuple
 
 import numpy as np
+from cloudfiles.interfaces import BytesIO
 from tqdm import tqdm
 
 # All this file is adapted from "cloud-volume" sharding.py file

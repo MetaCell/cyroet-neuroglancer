@@ -7,7 +7,9 @@ import ndjson
 import neuroglancer
 import neuroglancer.cli
 import neuroglancer.static_file_server
-import neuroglancer.write_annotations
+from neuroglancer import AnnotationLayer, AnnotationPropertySpec, CoordinateSpace
+from neuroglancer.server import sys
+from neuroglancer.write_annotations import AnnotationWriter
 
 from cryo_et_neuroglancer.sharding import ShardingSpecification, jsonify
 
@@ -16,17 +18,25 @@ def load_data(
     metadata_path: Path, annotations_path: Path
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Load in the metadata (json) and annotations (ndjson) files."""
-    with open(metadata_path) as f:
+    with open(metadata_path, mode="r") as f:
         metadata = json.load(f)
-    with open(annotations_path) as f:
+    with open(annotations_path, mode="r") as f:
         annotations = ndjson.load(f)
     return metadata, annotations
+
+
+def build_rotation_matrix_propertie() -> list[AnnotationPropertySpec]:
+    return [
+        AnnotationPropertySpec(id=f"rot_mat_{i}_{j}", type="float32")
+        for i in range(3)
+        for j in range(3)
+    ]
 
 
 def write_annotations(
     output_dir: Path,
     annotations: tuple[dict[str, Any], list[dict[str, Any]]],
-    coordinate_space: neuroglancer.CoordinateSpace,
+    coordinate_space: CoordinateSpace,
     color: tuple[int, int, int, int],
 ) -> Path:
     """
@@ -36,13 +46,15 @@ def write_annotations(
     """
     metadata, data = annotations
     name = metadata["annotation_object"]["name"]
-    writer = neuroglancer.write_annotations.AnnotationWriter(
+
+    is_oriented = data[0]["type"] == "orientedPoint"
+    writer = AnnotationWriter(
         coordinate_space=coordinate_space,
         annotation_type="point",
         properties=[
-            neuroglancer.AnnotationPropertySpec(id="size", type="float32"),
-            neuroglancer.AnnotationPropertySpec(id="point_color", type="rgba"),
-            neuroglancer.AnnotationPropertySpec(
+            AnnotationPropertySpec(id="size", type="float32"),
+            AnnotationPropertySpec(id="point_color", type="rgba"),
+            AnnotationPropertySpec(
                 id="name",
                 type="uint8",
                 enum_values=[
@@ -52,15 +64,22 @@ def write_annotations(
                     name,
                 ],
             ),
+            # Spec must be added at the object construction time, not after
+            *(build_rotation_matrix_propertie() if is_oriented else []),
         ],
     )
 
-    size = metadata["annotation_object"]["diameter"]
+    size = metadata["annotation_object"].get("diameter", 1)
     # TODO not sure what units the diameter is in
     size = size / 100
-    for i, p in enumerate(data):
+    for index, p in enumerate(data):
         location = [p["location"][k] for k in ("x", "y", "z")]
-        writer.add_point(location, size=size, point_color=color, name=0)
+        rot_mat = {
+            f"rot_mat_{i}_{j}": col
+            for i, line in enumerate(p["xyz_rotation_matrix"])
+            for j, col in enumerate(line)
+        }
+        writer.add_point(location, size=size, point_color=color, name=name, **rot_mat)
 
     writer.write(output_dir)
 
@@ -93,7 +112,7 @@ def _shard_by_id_index(directory: Path, shard_bits: int, minishard_bits: int):
     info_path.write_text(jsonify(info, indent=2))
 
 
-def view_data(coordinate_space: neuroglancer.CoordinateSpace, output_dir: Path) -> None:
+def view_data(coordinate_space: CoordinateSpace, output_dir: Path) -> None:
     ap = argparse.ArgumentParser()
     neuroglancer.cli.add_server_arguments(ap)
     args = ap.parse_args()
@@ -108,7 +127,7 @@ def view_data(coordinate_space: neuroglancer.CoordinateSpace, output_dir: Path) 
     )
 
     with viewer.txn() as s:
-        s.layers["annotations"] = neuroglancer.AnnotationLayer(
+        s.layers["annotations"] = AnnotationLayer(
             source=f"precomputed://{server.url}",
             tab="rendering",
             shader="""
@@ -128,7 +147,6 @@ void main() {
 
 
 # TODO support hex colors
-# TODO handle cases where information is missing
 def main(
     json_path: Path,
     output: Path,
@@ -137,17 +155,20 @@ def main(
     shard_by_id: tuple[int, int] = (0, 10),
 ) -> None:
     """For each path set, load the data and write the combined annotations."""
-    if len(shard_by_id) < 2:
+    if shard_by_id and len(shard_by_id) < 2:
         shard_by_id = (0, 10)
 
-    annotation = load_data(json_path, json_path.with_suffix(".ndjson"))
+    annotations = load_data(json_path, json_path.with_suffix(".ndjson"))
+    if len(annotations) == 0:
+        print(f"No annotation found in {json_path.with_suffix('.ndjson')!s}")
+        sys.exit(-1)
 
-    coordinate_space = neuroglancer.CoordinateSpace(
+    coordinate_space = CoordinateSpace(
         names=["x", "y", "z"],
         units=["nm", "nm", "nm"],
         scales=[resolution, resolution, resolution],
     )
-    write_annotations(output, annotation, coordinate_space, color)
+    write_annotations(output, annotations, coordinate_space, color)
     print("Wrote annotations to", output)
 
     if shard_by_id and len(shard_by_id) == 2:

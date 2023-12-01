@@ -10,9 +10,6 @@ from .url_creation import combine_json_layers, load_jsonstate_to_browser, viewer
 from .utils import get_resolution
 from .write_annotations import main as annotations_encode
 from .write_segmentation import main as segmentation_encode
-from .write_annotations import main as annotations_encode
-from .utils import get_resolution
-from .state_generation import create_image
 
 
 def handle_json_load(path: str, **kwargs):

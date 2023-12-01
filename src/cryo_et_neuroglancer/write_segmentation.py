@@ -9,9 +9,7 @@ from tqdm import tqdm
 
 from .chunk import Chunk
 from .io import load_omezarr_data, write_metadata
-from .segmentation_encoding import (
-    create_segmentation_chunk,
-)
+from .segmentation_encoding import create_segmentation_chunk
 from .utils import iterate_chunks
 
 
