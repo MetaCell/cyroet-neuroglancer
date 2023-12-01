@@ -73,11 +73,14 @@ def write_annotations(
     size = metadata["annotation_object"].get("diameter", 350) / 10
     for index, p in enumerate(data):
         location = [p["location"][k] for k in ("x", "y", "z")]
-        rot_mat = {
-            f"rot_mat_{i}_{j}": col
-            for i, line in enumerate(p["xyz_rotation_matrix"])
-            for j, col in enumerate(line)
-        }
+        if is_oriented:
+            rot_mat = {
+                f"rot_mat_{i}_{j}": col
+                for i, line in enumerate(p["xyz_rotation_matrix"])
+                for j, col in enumerate(line)
+            }
+        else:
+            rot_mat = {}
         writer.add_point(location, size=size, point_color=color, name=0, **rot_mat)
 
     writer.write(output_dir)
