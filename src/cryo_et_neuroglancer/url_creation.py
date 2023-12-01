@@ -99,6 +99,5 @@ def combine_json_layers(
         ],
     }
     if middle is not None:
-        print("Setting middle", middle)
         combined_json["position"] = middle
     json.dump(combined_json, open(output, "w"), indent=2)

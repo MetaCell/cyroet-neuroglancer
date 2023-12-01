@@ -132,7 +132,7 @@ class AnnotationJSONGenerator(RenderingJSONGenerator):
             "tab": "rendering",
             "shader": "void main() {\n  "
             + "setColor(prop_point_color());\n  "
-            + f"setPointMarkerSize({self.point_size_multiplier} * prop_size());\n"
+            + f"setPointMarkerSize({self.point_size_multiplier} * prop_diameter());\n"
             + "}",
         }
 
