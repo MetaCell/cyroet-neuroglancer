@@ -120,20 +120,49 @@ class AnnotationJSONGenerator(RenderingJSONGenerator):
 
     color: tuple[str, str]
     point_size_multiplier: float = 1.0
+    oriented: bool = False
 
     def __post_init__(self):
         self._type = RenderingTypes.ANNOTATION
 
     def generate_json(self) -> dict:
+        checkbox = "#uicontrol bool hideOrientation checkbox\n" if self.oriented else ""
+        if self.oriented:
+            color_calc = (
+                "vec4 calculateColor() {\n"
+                + "  vec3 zVector = vec3(1, 0, 0);\n"
+                + "  mat3 rotation = mat3(\n"
+                + "    prop_rot_mat_0_0(), prop_rot_mat_0_1(), prop_rot_mat_0_2(),\n"
+                + "    prop_rot_mat_1_0(), prop_rot_mat_1_1(), prop_rot_mat_1_2(),\n"
+                + "    prop_rot_mat_2_0(), prop_rot_mat_2_1(), prop_rot_mat_2_2());\n"
+                + "  return vec4(rotation * zVector, 1.0);\n"
+                + "}\n"
+            )
+            color_set = (
+                "vec4 color;\n"
+                + "  if (hideOrientation) {\n"
+                + "    color = prop_point_color();\n"
+                + "  }\n"
+                + "  else {\n"
+                + "    color = calculateColor();\n"
+                + "  }\n"
+                + "  setColor(color);\n"
+            )
+        else:
+            color_calc = ""
+            color_set = "setColor(prop_point_color());\n"
+
         return {
             "type": self.layer_type,
             "name": f"{self.name} ({self.color[1]})",
             "source": f"precomputed://{self.source}",
             "tab": "rendering",
             "shader": f"#uicontrol float pointScale slider(min=0.01, max=2.0, default={self.point_size_multiplier}, step=0.01)\n"
-            "void main() {\n  "
-            + "setColor(prop_point_color());\n  "
-            + "setPointMarkerSize(pointScale * prop_diameter());\n"
+            + checkbox
+            + color_calc
+            + "void main() {\n  "
+            + color_set
+            + "  setPointMarkerSize(pointScale * prop_diameter());\n"
             + "}",
         }
 
@@ -199,6 +228,7 @@ def create_annotation(
     output: Optional[Path],
     color: Optional[str],
     point_size_multiplier: Optional[float],
+    oriented: bool,
 ) -> int:
     source, name, url, output, zarr_path, _ = setup_creation(
         source, name, url, output, zarr_path, None
@@ -212,6 +242,7 @@ def create_annotation(
         name=name,
         color=new_color,
         point_size_multiplier=point_size_multiplier,
+        oriented=oriented,
     )
     json_generator.to_json(output)
     return 0

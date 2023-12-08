@@ -229,6 +229,12 @@ def parse_args(args):
         type=float,
         help="The point size multiplier to use for the annotation",
     )
+    subcommand.add_argument(
+        "--oriented",
+        required=False,
+        action="store_true",
+        help="If the annotation is oriented",
+    )
     subcommand.set_defaults(func=create_annotation)
 
     # Segmentation JSON creation
