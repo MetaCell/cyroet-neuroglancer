@@ -115,16 +115,16 @@ def parse_args(args):
         "-c",
         "--color",
         required=False,
-        nargs=4,
-        type=int,
-        help="Color of the points as 0-255 RGBA",
+        nargs="*",
+        type=str,
+        help="Either a set of four uint8s to indicate the color of the points as 0-255 RGB or a hex string of ##RRGGBB",
     )
     subcommand.add_argument(
         "--shard-by-id",
         required=False,
         nargs="*",
         type=int,
-        help="Produces a shard indexes for by_id indexes considering the two int entered as arguments as value for the shard bits and minishard bits. The default value for the shard bits is 0 and the default value for the minishard bits is 10",
+        help="Pass 1 to turn on, or SHARD_BITS MINISHARD_BITS. Reduces the annotation output from multiple files to a smaller number of sharded files. The default value for the shard bits is 0 (which determines the number of output files) and the default value for the minishard bits is 10 (which determines how many in a file.",
     )
     subcommand.set_defaults(func=annotations_encode)
 
