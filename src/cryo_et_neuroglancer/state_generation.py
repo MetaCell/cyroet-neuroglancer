@@ -130,7 +130,7 @@ class AnnotationJSONGenerator(RenderingJSONGenerator):
         if self.oriented:
             color_calc = (
                 "vec4 calculateColor() {\n"
-                + "  vec3 zVector = vec3(1, 0, 0);\n"
+                + "  vec3 zVector = vec3(0, 0, 1);\n"
                 + "  mat3 rotation = mat3(\n"
                 + "    prop_rot_mat_0_0(), prop_rot_mat_0_1(), prop_rot_mat_0_2(),\n"
                 + "    prop_rot_mat_1_0(), prop_rot_mat_1_1(), prop_rot_mat_1_2(),\n"
