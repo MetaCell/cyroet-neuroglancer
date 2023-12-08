@@ -130,9 +130,10 @@ class AnnotationJSONGenerator(RenderingJSONGenerator):
             "name": f"{self.name} ({self.color[1]})",
             "source": f"precomputed://{self.source}",
             "tab": "rendering",
-            "shader": "void main() {\n  "
+            "shader": f"#uicontrol float pointScale slider(min=0.01, max=2.0, default={self.point_size_multiplier}, step=0.01)\n"
+            "void main() {\n  "
             + "setColor(prop_point_color());\n  "
-            + f"setPointMarkerSize({self.point_size_multiplier} * prop_diameter());\n"
+            + "setPointMarkerSize(pointScale * prop_diameter());\n"
             + "}",
         }
 
