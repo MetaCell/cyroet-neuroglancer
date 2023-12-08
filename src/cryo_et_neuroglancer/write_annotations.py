@@ -51,6 +51,7 @@ def write_annotations(
         properties=[
             AnnotationPropertySpec(id="diameter", type="float32"),
             AnnotationPropertySpec(id="point_color", type="rgba"),
+            AnnotationPropertySpec(id="point_index", type="float32"),
             AnnotationPropertySpec(
                 id="name",
                 type="uint8",
@@ -80,7 +81,12 @@ def write_annotations(
         else:
             rot_mat = {}
         writer.add_point(
-            location, diameter=diameter, point_color=color, name=0, **rot_mat
+            location,
+            diameter=diameter,
+            point_color=color,
+            point_index=float(index),
+            name=0,
+            **rot_mat,
         )
 
     writer.write(output_dir)
