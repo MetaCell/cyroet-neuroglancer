@@ -8,6 +8,7 @@ from neuroglancer.server import sys
 from neuroglancer.write_annotations import AnnotationWriter
 
 from cryo_et_neuroglancer.sharding import ShardingSpecification, jsonify
+from cryo_et_neuroglancer.utils import parse_color
 
 
 def load_data(
@@ -113,12 +114,11 @@ def _shard_by_id_index(directory: Path, shard_bits: int, minishard_bits: int):
     info_path.write_text(jsonify(info, indent=2))
 
 
-# TODO support hex colors
 def main(
     json_path: Path,
     output: Path,
     resolution: float,
-    color: tuple[int, int, int, int],
+    color: list[str],
     shard_by_id: tuple[int, int] = (0, 10),
 ) -> None:
     """For each path set, load the data and write the combined annotations."""
@@ -129,13 +129,14 @@ def main(
     if len(annotations) == 0:
         print(f"No annotation found in {json_path.with_suffix('.ndjson')!s}")
         sys.exit(-1)
+    parsed_color = parse_color(color)
 
     coordinate_space = CoordinateSpace(
         names=["x", "y", "z"],
         units=["nm", "nm", "nm"],
         scales=[resolution, resolution, resolution],
     )
-    write_annotations(output, annotations, coordinate_space, color)
+    write_annotations(output, annotations, coordinate_space, parsed_color)
     print("Wrote annotations to", output)
 
     if shard_by_id and len(shard_by_id) == 2:

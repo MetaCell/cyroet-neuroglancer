@@ -15,6 +15,33 @@ class DotDict(dict):
     __getattr__ = dict.get
 
 
+def parse_color(input_color: list[str]) -> tuple[int, int, int, int]:
+    """
+    Parse the color from a list of strings to a list of integers
+
+    Parameters
+    ----------
+    color : list[str]
+        The color as a list of strings
+
+    Returns
+    -------
+    list[int]
+        The color as a list of integers
+    """
+    if len(input_color) == 1:
+        color = input_color[0]
+        red = int(color[1:3], 16)
+        green = int(color[3:5], 16)
+        blue = int(color[5:7], 16)
+        output_color = (red, green, blue)
+    elif len(input_color) != 3:
+        raise ValueError(f"Color must be a list of 3 values, provided: {input_color}")
+    else:
+        output_color = tuple(int(x) for x in input_color)  # type: ignore
+    return output_color + (255,)
+
+
 def compute_contrast_limits(
     zarr_path: Path,
 ) -> tuple[tuple[float, float], tuple[int, int, int]]:
