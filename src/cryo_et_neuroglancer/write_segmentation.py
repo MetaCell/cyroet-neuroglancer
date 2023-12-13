@@ -73,9 +73,9 @@ def main(
     """Convert the given OME-Zarr file to neuroglancer segmentation format with the given block size"""
     print(f"Converting {filename} to neuroglancer compressed segmentation format")
     dask_data = load_omezarr_data(filename)
-    output_directory = (
-        output_path or filename.parent / f"precomputed-{filename.stem[:-5]}"
-    )
+    remove_ending = filename.stem.endswith(".zarr") or filename.stem.endswith("_zarr")
+    output_name = filename.stem[:-5] if remove_ending else filename.stem
+    output_directory = output_path or filename.parent / f"precomputed-{output_name}"
     if delete_existing_output_directory and output_directory.exists():
         contents = list(output_directory.iterdir())
         content_names = sorted([c.name for c in contents])
