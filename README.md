@@ -16,6 +16,8 @@ pip install cyro-et-neuroglancer
 cryoet-converter --help
 ```
 
+### Examples
+
 See the examples folder for bash scripts that create all the necessary files for a neuroglancer viewer from a cryo-ET dataset.
 
 ### Annotations
@@ -29,6 +31,12 @@ See the examples folder for bash scripts that create all the necessary files for
 `./examples/convert_and_view_image_and_segmentation.sh`
 
 ![Segmentation](examples/segmentation.png)
+
+### Oriented points
+
+`./examples/convert_and_view_oriented_points.sh`
+
+![Oriented points](examples/orientedpoints.png)
 
 ### Components
 
