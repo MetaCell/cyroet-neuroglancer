@@ -100,9 +100,10 @@ class SegmentationJSONGenerator(RenderingJSONGenerator):
         self._type = RenderingTypes.SEGMENTATION
 
     def generate_json(self) -> dict:
+        color_part = f" ({self.color[1]})" if self.color[1] else ""
         return {
             "type": self.layer_type,
-            "name": f"{self.name} ({self.color[1]})",
+            "name": f"{self.name}{color_part}",
             "source": f"precomputed://{self.source}",
             "tab": "rendering",
             "selectedAlpha": 1,
@@ -126,7 +127,12 @@ class AnnotationJSONGenerator(RenderingJSONGenerator):
         self._type = RenderingTypes.ANNOTATION
 
     def generate_json(self) -> dict:
+        color_part = f" ({self.color[1]})" if self.color[1] else ""
         checkbox = "#uicontrol bool hideOrientation checkbox\n" if self.oriented else ""
+        # Other shader options:
+        #   vec3 rotated = normalize(rotation * zVector);
+        #   vec3 color = (rotated + 1.0) / 2.0;
+        #   return vec4(color, 1.0);
         if self.oriented:
             color_calc = (
                 "vec4 calculateColor() {\n"
@@ -135,7 +141,8 @@ class AnnotationJSONGenerator(RenderingJSONGenerator):
                 + "    prop_rot_mat_0_0(), prop_rot_mat_0_1(), prop_rot_mat_0_2(),\n"
                 + "    prop_rot_mat_1_0(), prop_rot_mat_1_1(), prop_rot_mat_1_2(),\n"
                 + "    prop_rot_mat_2_0(), prop_rot_mat_2_1(), prop_rot_mat_2_2());\n"
-                + "  return vec4(rotation * zVector, 1.0);\n"
+                + "  vec4 zRotated = vec4(rotation * zVector, 1.0);\n"
+                + "  return abs(zRotated);\n"
                 + "}\n"
             )
             color_set = (
@@ -154,7 +161,7 @@ class AnnotationJSONGenerator(RenderingJSONGenerator):
 
         return {
             "type": self.layer_type,
-            "name": f"{self.name} ({self.color[1]})",
+            "name": f"{self.name}{color_part}",
             "source": f"precomputed://{self.source}",
             "tab": "rendering",
             "shader": f"#uicontrol float pointScale slider(min=0.01, max=2.0, default={self.point_size_multiplier}, step=0.01)\n"
@@ -187,7 +194,7 @@ def setup_creation(
 
 def process_color(color: Optional[str]) -> tuple[str, str]:
     if color is None:
-        return ("#ff0000", "red")
+        return ("#ffffff", "")
     else:
         color_parts = color.split(" ")
         if len(color_parts) == 1:
