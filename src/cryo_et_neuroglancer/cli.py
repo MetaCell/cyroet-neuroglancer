@@ -117,14 +117,14 @@ def parse_args(args):
         required=False,
         nargs="*",
         type=str,
-        help="Either a set of four uint8s to indicate the color of the points as 0-255 RGB or a hex string of ##RRGGBB",
+        help="Either a set of three 0-255 ints R G B to indicate the color of the points or a hex string of #RRGGBB",
     )
     subcommand.add_argument(
         "--shard-by-id",
         required=False,
         nargs="*",
         type=int,
-        help="Pass 1 to turn on, or SHARD_BITS MINISHARD_BITS. Reduces the annotation output from multiple files to a smaller number of sharded files. The default value for the shard bits is 0 (which determines the number of output files) and the default value for the minishard bits is 10 (which determines how many in a file.",
+        help="Pass 1 to turn on, or two integers as SHARD_BITS MINISHARD_BITS. Reduces the annotation output from multiple files to a smaller number of sharded files. The default value for the shard bits is 0 (which determines the number of output files) and the default value for the minishard bits is 10 (which determines how many minishards are in a file).",
     )
     subcommand.set_defaults(func=annotations_encode)
 
@@ -146,19 +146,21 @@ def parse_args(args):
     subcommand.set_defaults(func=handle_json_load)
 
     # Image JSON creation
+    zarr_source_string = "Path towards the remote ZARR file, which is combined with the URL to produce the source URL"
+    precomputed_source_string = "Path towards the remote precomputed folder, which is combined with the URL to produce the source URL"
+    zarr_local_string = "Path towards the local ZARR file, which is used to compute the contrast limits and the middle slices"
+    url_string = "URL of the remote server that data is loaded from by neuroglancer (by default, the source URL is used in full if not provided)"
+
     subcommand = subparsers.add_parser(
         "create-image",
         help="Create a JSON file for a given image",
     )
-    subcommand.add_argument(
-        "source",
-        help="Path towards the remote ZARR file",
-    )
+    subcommand.add_argument("source", help=zarr_source_string)
     subcommand.add_argument(
         "-z",
         "--zarr-path",
         required=False,
-        help="Path towards the local ZARR file",
+        help=zarr_local_string,
     )
     subcommand.add_argument(
         "-o", "--output", required=False, help="Output json to produce", type=Path
@@ -169,12 +171,7 @@ def parse_args(args):
         required=False,
         help="Name of the layer (default: source filename)",
     )
-    subcommand.add_argument(
-        "-u",
-        "--url",
-        required=False,
-        help="URL of the zarr server (by default, the source path is used)",
-    )
+    subcommand.add_argument("-u", "--url", required=False, help=url_string)
     subcommand.add_argument(
         "-r",
         "--resolution",
@@ -190,16 +187,7 @@ def parse_args(args):
         "create-annotation",
         help="Create a JSON file for a given annotation",
     )
-    subcommand.add_argument(
-        "source",
-        help="Path towards the remote ZARR file",
-    )
-    subcommand.add_argument(
-        "-z",
-        "--zarr-path",
-        required=False,
-        help="Path towards the local ZARR file",
-    )
+    subcommand.add_argument("source", help=precomputed_source_string)
     subcommand.add_argument(
         "-o", "--output", required=False, help="Output json to produce", type=Path
     )
@@ -209,18 +197,13 @@ def parse_args(args):
         required=False,
         help="Name of the layer (default: source filename)",
     )
-    subcommand.add_argument(
-        "-u",
-        "--url",
-        required=False,
-        help="URL of the zarr server (by default, the source path is used)",
-    )
+    subcommand.add_argument("-u", "--url", required=False, help=url_string)
     subcommand.add_argument(
         "-c",
         "--color",
         required=False,
         type=str,
-        help="A hex string followed the name of the color e.g. #FF0000 red",
+        help="A hex string followed the name of the color e.g. #ff0000 red",
     )
     subcommand.add_argument(
         "-s",
@@ -242,16 +225,7 @@ def parse_args(args):
         "create-segmentation",
         help="Create a JSON file for a given segmentation",
     )
-    subcommand.add_argument(
-        "source",
-        help="Path towards the remote ZARR file",
-    )
-    subcommand.add_argument(
-        "-z",
-        "--zarr-path",
-        required=False,
-        help="Path towards the local ZARR file",
-    )
+    subcommand.add_argument("source", help=precomputed_source_string)
     subcommand.add_argument(
         "-o", "--output", required=False, help="Output json to produce", type=Path
     )
@@ -261,18 +235,13 @@ def parse_args(args):
         required=False,
         help="Name of the layer (default: source filename)",
     )
-    subcommand.add_argument(
-        "-u",
-        "--url",
-        required=False,
-        help="URL of the zarr server (by default, the source path is used)",
-    )
+    subcommand.add_argument("-u", "--url", required=False, help=url_string)
     subcommand.add_argument(
         "-c",
         "--color",
         required=False,
         type=str,
-        help="A hex string followed the name of the color e.g. #FF0000 red",
+        help="A hex string followed the name of the color e.g. #ff0000 red",
     )
     subcommand.set_defaults(func=create_segmentation)
 

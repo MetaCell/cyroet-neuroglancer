@@ -229,7 +229,6 @@ def create_image(
 
 def create_annotation(
     source: str,
-    zarr_path: Optional[str],
     name: Optional[str],
     url: Optional[str],
     output: Optional[Path],
@@ -237,8 +236,8 @@ def create_annotation(
     point_size_multiplier: Optional[float],
     oriented: bool,
 ) -> int:
-    source, name, url, output, zarr_path, _ = setup_creation(
-        source, name, url, output, zarr_path, None
+    source, name, url, output, _, _ = setup_creation(
+        source, name, url, output, None, None
     )
     new_color = process_color(color)
     point_size_multiplier = (
@@ -257,14 +256,13 @@ def create_annotation(
 
 def create_segmentation(
     source: str,
-    zarr_path: Optional[str],
     name: Optional[str],
     url: Optional[str],
     output: Optional[Path],
     color: Optional[str],
 ) -> int:
-    source, name, url, output, zarr_path, _ = setup_creation(
-        source, name, url, output, zarr_path, None
+    source, name, url, output, _, _ = setup_creation(
+        source, name, url, output, None, None
     )
     color_tuple = process_color(color)
     json_generator = SegmentationJSONGenerator(
