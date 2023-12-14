@@ -141,8 +141,9 @@ class AnnotationJSONGenerator(RenderingJSONGenerator):
                 + "    prop_rot_mat_0_0(), prop_rot_mat_0_1(), prop_rot_mat_0_2(),\n"
                 + "    prop_rot_mat_1_0(), prop_rot_mat_1_1(), prop_rot_mat_1_2(),\n"
                 + "    prop_rot_mat_2_0(), prop_rot_mat_2_1(), prop_rot_mat_2_2());\n"
-                + "  vec4 zRotated = vec4(rotation * zVector, 1.0);\n"
-                + "  return abs(zRotated);\n"
+                + "  vec3 zRotated = vec3(rotation * zVector);\n"
+                + "  vec3 zAbs = abs(zRotated);\n"
+                + "  return vec4(zAbs[2], zAbs[1], zAbs[0], 1.0);\n"
                 + "}\n"
             )
             color_set = (
