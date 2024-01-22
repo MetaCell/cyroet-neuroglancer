@@ -106,6 +106,11 @@ def parse_args(args):
         type=Path,
     )
     subcommand.add_argument(
+        "annotations_path",
+        help="Path towards the JSON file containing the annotations",
+        type=Path,
+    )
+    subcommand.add_argument(
         "-o", "--output", required=False, help="Output folder to produce", type=Path
     )
     subcommand.add_argument(
