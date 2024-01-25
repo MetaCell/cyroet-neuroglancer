@@ -122,20 +122,29 @@ def _shard_by_id_index(directory: Path, shard_bits: int, minishard_bits: int):
 
 def main(
     json_path: Path,
-    annotations_path: Path,
     output: Path,
     resolution: float,
     color: list[str],
     shard_by_id: tuple[int, int] = (0, 10),
 ) -> None:
     """For each path set, load the data and write the combined annotations."""
-    if shard_by_id and len(shard_by_id) < 2:
-        shard_by_id = (0, 10)
-        
-    annotations = load_data(json_path, annotations_path)
+    annotations = load_data(json_path, json_path.with_suffix(".ndjson"))
     if len(annotations) == 0:
         print(f"No annotation found in {json_path.with_suffix('.ndjson')!s}")
         sys.exit(-1)
+    process_annotation(annotations, output, resolution, color, shard_by_id)
+
+
+def process_annotation(
+    annotations: tuple[dict[str, Any], list[dict[str, Any]]],
+    output: Path,
+    resolution: float,
+    color: list[str],
+    shard_by_id: tuple[int, int] = (0, 10),
+) -> None:
+    if shard_by_id and len(shard_by_id) < 2:
+        shard_by_id = (0, 10)
+
     parsed_color = parse_color(color)
 
     coordinate_space = CoordinateSpace(
