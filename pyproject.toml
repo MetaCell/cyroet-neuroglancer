@@ -8,7 +8,9 @@ dependencies = [
     "dask",
     "zarr",
     "neuroglancer",
-    "tqdm"
+    "tqdm",
+    "cloud-files",
+    "ndjson"
 ]
 
 [project.optional-dependencies]
