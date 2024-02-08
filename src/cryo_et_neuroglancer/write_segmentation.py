@@ -27,9 +27,9 @@ def _create_metadata(
         "num_channels": 1,
         "scales": [
             {
-                "chunk_sizes": [chunk_size],
+                "chunk_sizes": [chunk_size[::-1]],
                 "encoding": "compressed_segmentation",
-                "compressed_segmentation_block_size": block_size,
+                "compressed_segmentation_block_size": block_size[::-1],
                 "resolution": resolution,
                 "key": data_directory,
                 "size": data_size[
