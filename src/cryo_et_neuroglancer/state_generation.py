@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 from .utils import compute_contrast_limits, get_resolution, make_transform
+from .shaders import get_default_image_shader
 
 
 class RenderingTypes(Enum):
@@ -61,7 +62,9 @@ class ImageJSONGenerator(RenderingJSONGenerator):
         distance = self.contrast_limits[1] - self.contrast_limits[0]
         window_start = self.contrast_limits[0] - (distance / 10)
         window_end = self.contrast_limits[1] + (distance / 10)
-        return f"#uicontrol invlerp contrast(range=[{self.contrast_limits[0]}, {self.contrast_limits[1]}], window=[{window_start}, {window_end}])\nvoid main() {{\n  emitGrayscale(contrast());\n}}"
+        return get_default_image_shader(
+            self.contrast_limits, (window_start, window_end)
+        )
 
     def generate_json(self) -> dict:
         transform: dict = {}
