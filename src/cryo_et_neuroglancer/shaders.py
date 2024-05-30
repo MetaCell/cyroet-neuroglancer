@@ -9,7 +9,7 @@ def build_shader(shader_parts: list[str]) -> str:
 def _build_invlerp(
     name: str, contrast_limits: tuple[float, float], window_limits: tuple[float, float]
 ) -> str:
-    return f"#uicontrol invlerp {name}(range=[{contrast_limits[0]}, {contrast_limits[1]}], window=[{window_limits[0]}, {window_limits[1]}], clamp=true)"
+    return f"#uicontrol invlerp {name}(range=[{contrast_limits[0]}, {contrast_limits[1]}], window=[{window_limits[0]}, {window_limits[1]}])"
 
 
 def _build_invertable_invlerp_getter(name: str):
@@ -40,18 +40,22 @@ def get_default_image_shader(
     threed_contrast_name = "contrast3D"
     shader_parts = [
         _build_invlerp(contrast_name, contrast_limits, window_limits),
-        _build_invlerp(threed_contrast_name, contrast_limits, window_limits),
         *_build_invertable_invlerp_getter(contrast_name),
+        _build_invlerp(threed_contrast_name, contrast_limits, window_limits),
         *_build_invertable_invlerp_getter(threed_contrast_name),
         "",
         "void main() {",
         "  float outputValue;",
         *_build_volume_rendering_switch(
-            [f"outputValue = {threed_contrast_name}_get();"],
-            [f"outputValue = {contrast_name}_get();"],
+            [
+                f"outputValue = {threed_contrast_name}_get();",
+                "emitIntensity(outputValue);",
+            ],
+            [
+                f"outputValue = {contrast_name}_get();",
+            ],
         ),
         "  emitGrayscale(outputValue);",
-        "  emitIntensity(outputValue);",
         "}",
     ]
     return build_shader(shader_parts)
