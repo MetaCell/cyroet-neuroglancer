@@ -41,7 +41,8 @@ output = generate_oriented_point_layer(
     source=SOURCE,
     name="Test Oriented Points",
     color="#FF0000",
-    point_size_multiplier=1.0,
+    point_size_multiplier=0.5,
+    line_width=2.0,
     is_visible=True,
     is_instance_segmentation=False,
 )

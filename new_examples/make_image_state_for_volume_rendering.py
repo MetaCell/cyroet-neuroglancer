@@ -1,7 +1,6 @@
 import json
 
 from cryoet_data_portal_neuroglancer.state_generator import (
-    generate_image_volume_layer,
     generate_image_layer,
     combine_json_layers,
 )
@@ -14,16 +13,9 @@ layer_img_json = generate_image_layer(
     scale=(1.0, 1.0, 1.0),
     size={"x": 1.0, "y": 1.0, "z": 1.0},
     name="Test VR",
+    mean=10.0,
+    rms=20.0,
 )
-print(layer_img_json)
-
-layer_vr_json = generate_image_volume_layer(
-    source=SOURCE,
-    name="Test Volume Rendering",
-)
-
-json_output = combine_json_layers([layer_vr_json], 1.0)
-
-print(json_output)
+json_output = combine_json_layers([layer_img_json], 1.0)
 
 json.dump(json_output, open("image_volume_layer.json", "w"), indent=2)

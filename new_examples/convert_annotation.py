@@ -5,6 +5,10 @@ from typing import Any
 from cryoet_data_portal_neuroglancer.precompute.points import (
     encode_annotation,
 )
+from cryoet_data_portal_neuroglancer.state_generator import (
+    generate_point_layer,
+    combine_json_layers,
+)
 from pathlib import Path
 
 
@@ -28,3 +32,17 @@ OUTPUT_PATH = Path(r"/media/starfish/LargeSSD/data/cryoET/data/new_fatty_acid_sy
 metadata, data = load_data(JSON_PATH, JSON_PATH.with_suffix(".ndjson"))
 
 encode_annotation(data, metadata, OUTPUT_PATH, 1.0, shard_by_id=None)
+
+SOURCE = "http://127.0.0.1:9000/new_fatty_acid_synthase/"
+
+output = generate_point_layer(
+    source=SOURCE,
+    name="Test Points",
+    color="#FF00FF",
+    point_size_multiplier=1.2,
+    is_instance_segmentation=True,
+)
+
+layer_json = combine_json_layers([output], 1.0)
+
+json.dump(layer_json, open("point_layer.json", "w"), indent=2)
