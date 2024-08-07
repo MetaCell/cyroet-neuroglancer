@@ -1,8 +1,7 @@
 import json
+import logging
 
-from cryoet_data_portal_neuroglancer.precompute.points import (
-    encode_annotation,
-)
+from cryoet_data_portal_neuroglancer.precompute.points import encode_annotation
 from cryoet_data_portal_neuroglancer.precompute.instance_mesh import (
     encode_oriented_mesh,
 )
@@ -13,8 +12,8 @@ from cryoet_data_portal_neuroglancer.state_generator import (
 )
 from cryoet_data_portal_neuroglancer.io import load_glb_file, load_oriented_point_data
 from pathlib import Path
-from cryoet_data_portal_neuroglancer.precompute.glb_meshes import (
-    generate_standalone_sharded_multiresolution_mesh,
+from cryoet_data_portal_neuroglancer.precompute.mesh import (
+    generate_sharded_mesh_from_lods,
 )
 
 
@@ -35,13 +34,16 @@ metadata, data = load_oriented_point_data(
 encode_annotation(
     data, metadata, OUTPUT_PATH, 0.784 * 1e-9, shard_by_id=(0, 10), is_oriented=True
 )
-mesh = load_glb_file(MESH_PATH)
+logging.basicConfig(level=logging.INFO, force=True)
+scene = load_glb_file(MESH_PATH)
 
-sub_result = encode_oriented_mesh(mesh, data, metadata, OUTPUT_PATH, 2)
-generate_standalone_sharded_multiresolution_mesh(
-    sub_result,
-    OUTPUT_PATH / "meshoutput",
+copy_pasted_lods = encode_oriented_mesh(
+    scene,
+    data,
+    num_lods=3,
+    max_faces_for_first_lod=10e10,
 )
+generate_sharded_mesh_from_lods(copy_pasted_lods, OUTPUT_PATH / "meshoutput")
 
 SOURCE = "http://127.0.0.1:9000/converted-01122021/"
 
