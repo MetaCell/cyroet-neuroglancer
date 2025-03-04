@@ -2,6 +2,8 @@
 
 ## User guide
 
+This repository is very out of date, and only really the examples should be given any heed. The code instead now lives at https://github.com/chanzuckerberg/cryoet-data-portal-neuroglancer.
+
 ### Installation
 
 ```bash
