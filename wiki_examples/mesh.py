@@ -6,7 +6,7 @@ from cryoet_data_portal_neuroglancer.precompute.mesh import (
     generate_multiresolution_mesh,
 )
 from cryoet_data_portal_neuroglancer.state_generator import (
-    generate_mesh_layer,
+    generate_oriented_point_mesh_layer,
 )
 
 MESH_PATH = Path(
@@ -22,11 +22,13 @@ generate_multiresolution_mesh(
 )
 
 # Create the JSON layer state for the mesh
-layer_json = generate_mesh_layer(
+layer_json = generate_oriented_point_mesh_layer(
     source=SOURCE,
     name="Test mesh",
-    color="#FFFF00",
+    color=None,
     scale=0.784 * 1e-9,
+    mesh_render_scale=20.0,
+    visible_segments=(2, 4, 1, 3),
 )
 json.dump(layer_json, open("mesh.json", "w"), indent=2)
 

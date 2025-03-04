@@ -10,5 +10,9 @@ ZARR_FILEPATH = (
 OUTPUT_DIR = Path(r"/media/starfish/LargeSSD/data/cryoET/data/actin_converted_new/")
 
 encode_segmentation(
-    ZARR_FILEPATH, OUTPUT_DIR, resolution=(1.0, 1.0, 1.0), include_mesh=True
+    ZARR_FILEPATH,
+    OUTPUT_DIR,
+    resolution=(2.0, 1.0, 1.0),
+    include_mesh=True,
+    delete_existing=True,
 )
